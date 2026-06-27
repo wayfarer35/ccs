@@ -1,9 +1,8 @@
 import { describe, test, expect, afterEach } from 'vitest';
 import {
-  redactSettings, buildProviderSettings, ccsFlagArgs, stripCcsKeys,
-  readCcsFlags, whichClaude, mergedPath, dryRun, dryRunDefault,
+  redactSettings, whichClaude, dryRun, dryRunDefault,
 } from '../src/launch.js';
-import { writeJSON, providerFile, ensureDirs } from '../src/config.js';
+import { writeJSON, providerFile } from '../src/config.js';
 import * as fs from 'node:fs';
 
 // 测试用临时 provider，写入真实 ~/.ccs/providers 但用唯一名避免污染
@@ -45,73 +44,11 @@ describe('redactSettings', () => {
   });
 });
 
-describe('buildProviderSettings', () => {
-  test('strips ccs-only keys (dangerouslySkipPermissions) from --settings fragment', () => {
-    writeTestProvider({
-      env: { ANTHROPIC_BASE_URL: 'https://x' },
-      dangerouslySkipPermissions: true,
-    });
-    try {
-      const r = buildProviderSettings(TEST_NAME);
-      expect(r.env.ANTHROPIC_BASE_URL).toBe('https://x');
-      expect(r.dangerouslySkipPermissions).toBeUndefined();
-    } finally { cleanup(); }
-  });
-
-  test('throws on missing provider', () => {
-    expect(() => buildProviderSettings(`__nonexistent_${process.pid}`)).toThrow();
-  });
-
-  test('returns env fragment as-is when no ccs keys', () => {
-    writeTestProvider({ env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_MODEL: 'm' } });
-    try {
-      const r = buildProviderSettings(TEST_NAME);
-      expect(r.env.ANTHROPIC_MODEL).toBe('m');
-    } finally { cleanup(); }
-  });
-});
-
 // 防止测试遗漏清理导致 ~/.ccs 污染的保险检查
 test('cleanup removes test provider file', () => {
   writeTestProvider({ env: {} });
   cleanup();
   expect(fs.existsSync(providerFile(TEST_NAME))).toBe(false);
-});
-
-describe('ccsFlagArgs', () => {
-  test('no flags → empty', () => {
-    expect(ccsFlagArgs({ dangerouslySkipPermissions: false })).toEqual([]);
-  });
-  test('flag on → adds --allow-dangerously-skip-permissions', () => {
-    expect(ccsFlagArgs({ dangerouslySkipPermissions: true })).toEqual(['--allow-dangerously-skip-permissions']);
-  });
-});
-
-describe('stripCcsKeys', () => {
-  test('removes dangerouslySkipPermissions, keeps env', () => {
-    const r = stripCcsKeys({ env: { A: '1' }, dangerouslySkipPermissions: true });
-    expect(r.dangerouslySkipPermissions).toBeUndefined();
-    expect(r.env.A).toBe('1');
-  });
-  test('does not mutate input', () => {
-    const input = { env: { A: '1' }, dangerouslySkipPermissions: true as const };
-    const snap = JSON.stringify(input);
-    stripCcsKeys(input);
-    expect(JSON.stringify(input)).toBe(snap);
-  });
-});
-
-describe('readCcsFlags', () => {
-  afterEach(cleanup);
-  test('reads dangerouslySkipPermissions true', () => {
-    writeTestProvider({ env: {}, dangerouslySkipPermissions: true });
-    expect(readCcsFlags(TEST_NAME).dangerouslySkipPermissions).toBe(true);
-  });
-  test('defaults false when absent / provider missing', () => {
-    expect(readCcsFlags(TEST_NAME).dangerouslySkipPermissions).toBe(false);
-    writeTestProvider({ env: {} });
-    expect(readCcsFlags(TEST_NAME).dangerouslySkipPermissions).toBe(false);
-  });
 });
 
 describe('whichClaude', () => {
@@ -134,32 +71,26 @@ describe('whichClaude', () => {
   });
 });
 
-describe('mergedPath', () => {
-  test('points into merged dir with settings suffix', () => {
-    ensureDirs();
-    const p = mergedPath(TEST_NAME);
-    expect(p).toContain('merged');
-    expect(p).toContain(TEST_NAME);
-    expect(p.endsWith('.settings.json')).toBe(true);
-  });
-});
-
 describe('dryRun / dryRunDefault (no spawn)', () => {
   afterEach(cleanup);
 
   test('dryRun prints redacted settings + will-run command without launching', () => {
     writeTestProvider({
       env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_AUTH_TOKEN: 'sk-abcdef1234' },
-      dangerouslySkipPermissions: true,
     });
     const out = captureConsole(() => dryRun(TEST_NAME, ['--print', 'hi']));
     expect(out).toContain('https://x');
     expect(out).toContain('****1234');
     expect(out).not.toContain('sk-abcdef1234');
     expect(out).toContain('--settings');
-    expect(out).toContain('--allow-dangerously-skip-permissions');
+    // --settings 直接指向 provider 配置文件本身（不再写中间文件）
+    expect(out).toContain(providerFile(TEST_NAME));
     expect(out).toContain('--print');
     expect(out).toContain('hi');
+  });
+
+  test('dryRun throws on missing provider', () => {
+    expect(() => dryRun(`__nonexistent_${process.pid}`, [])).toThrow();
   });
 
   test('dryRunDefault prints default command, no settings file', () => {

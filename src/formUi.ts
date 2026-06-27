@@ -22,7 +22,7 @@ type FieldId =
   | 'baseUrl' | 'token' | 'singleModel'
   | `alias_${typeof ALIAS_TIERS[number]}`
   | 'autoCompactWindow' | 'tier' | 'effort'
-  | 'attributionHeader' | 'disableNonEssentialTraffic' | 'dangerouslySkipPermissions'
+  | 'attributionHeader' | 'disableNonEssentialTraffic'
   | 'aliases' | 'nextTab' | 'submit' | 'cancel';
 
 interface Field {
@@ -87,7 +87,6 @@ export function tabFields(form: RuntimeForm, tabIndex: number): Field[] {
     return [
       { id: 'attributionHeader', kind: 'toggle' },
       { id: 'disableNonEssentialTraffic', kind: 'toggle' },
-      { id: 'dangerouslySkipPermissions', kind: 'toggle' },
       { id: 'effort', kind: 'select' },
       { id: 'autoCompactWindow', kind: 'number' },
       { id: 'nextTab', kind: 'button' },
@@ -138,7 +137,6 @@ function getBoolValue(form: RuntimeForm, field: Field): boolean {
   if (field.id === 'aliases') return form.mode === 'alias';
   if (field.id === 'attributionHeader') return form.options.attributionHeader;
   if (field.id === 'disableNonEssentialTraffic') return form.options.disableNonEssentialTraffic;
-  if (field.id === 'dangerouslySkipPermissions') return form.dangerouslySkipPermissions;
   return false;
 }
 
@@ -151,9 +149,6 @@ function setBoolValue(form: RuntimeForm, field: Field): RuntimeForm {
   }
   if (field.id === 'disableNonEssentialTraffic') {
     return { ...form, options: { ...form.options, disableNonEssentialTraffic: !form.options.disableNonEssentialTraffic } };
-  }
-  if (field.id === 'dangerouslySkipPermissions') {
-    return { ...form, dangerouslySkipPermissions: !form.dangerouslySkipPermissions };
   }
   return form;
 }
@@ -207,7 +202,6 @@ function fieldLabel(field: Field): string {
     case 'alias_HAIKU': return t('form.fAliasShort', { tier: 'HAIKU' });
     case 'attributionHeader': return t('form.fAttr');
     case 'disableNonEssentialTraffic': return t('form.fNonEss');
-    case 'dangerouslySkipPermissions': return t('form.fDanger');
     case 'effort': return t('form.fEffort');
     case 'autoCompactWindow': return t('form.fAutoCompact');
     case 'submit': return t('tab.submit');
@@ -531,7 +525,7 @@ function FormApp({ initialForm, onDone, onCancel }: FormAppProps): React.ReactNo
 // ---------- entry ----------
 
 interface RunOpts {
-  initial?: { env?: Record<string, string>; model?: string; dangerouslySkipPermissions?: true };
+  initial?: { env?: Record<string, string>; model?: string };
   preset?: Preset | null;
 }
 

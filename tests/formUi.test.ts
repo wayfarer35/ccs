@@ -48,12 +48,12 @@ describe('tabFields', () => {
     expect(ids).not.toContain('tier');
   });
 
-  test('options tab: 3 toggles + effort(select) + autoCompact(number) + nextTab', () => {
+  test('options tab: 2 toggles + effort(select) + autoCompact(number) + nextTab', () => {
     const f = makeForm();
     const fs = tabFields(f, 2);
     const ids = fs.map((x) => x.id);
     expect(ids).toEqual([
-      'attributionHeader', 'disableNonEssentialTraffic', 'dangerouslySkipPermissions',
+      'attributionHeader', 'disableNonEssentialTraffic',
       'effort', 'autoCompactWindow', 'nextTab',
     ]);
     expect(fs.find((x) => x.id === 'attributionHeader')!.kind).toBe('toggle');

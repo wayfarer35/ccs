@@ -30,7 +30,7 @@ ccs 是 Node.js ESM + TypeScript 项目，源码 `.ts` 经 `tsc` 编译到 `dist
 
 ### 可选字段只赋「真值」
 
-`exactOptionalPropertyTypes` 下 `dangerouslySkipPermissions?: true` 只能赋 `true`，不能赋 `undefined`。模式：`if (cond) result.dangerouslySkipPermissions = true;`——不写 else 分支。
+`exactOptionalPropertyTypes` 下可选字段（如 `ProviderSettings.model?: Tier`）只能赋实值，不能赋 `undefined`。模式：`if (cond) result.model = state.tier as Tier;`——不写 else 分支，省略即「不存在」。
 
 ### 运行时与类型不一致的边界
 

@@ -152,7 +152,6 @@ const DICT: Record<string, LocaleEntry> = {
   'form.fAttr': { en: 'Attribution header (CLAUDE_CODE_ATTRIBUTION_HEADER)', 'zh-CN': '归属信息 (CLAUDE_CODE_ATTRIBUTION_HEADER)' },
   'form.fNonEss': { en: 'Disable non-essential traffic (CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC)', 'zh-CN': '禁用非必要流量 (CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC)' },
   'form.fAutoCompact': { en: 'Auto-compact window (CLAUDE_CODE_AUTO_COMPACT_WINDOW)', 'zh-CN': '自动压缩窗口 (CLAUDE_CODE_AUTO_COMPACT_WINDOW)' },
-  'form.fDanger': { en: 'Allow bypass permissions (--allow-dangerously-skip-permissions, shift+tab to bypass)', 'zh-CN': '允许绕过权限 (--allow-dangerously-skip-permissions，shift+tab 切到 bypass)' },
   'form.fEffort': { en: 'Reasoning effort (CLAUDE_CODE_EFFORT_LEVEL)', 'zh-CN': '推理强度 (CLAUDE_CODE_EFFORT_LEVEL)' },
   'form.spaceHint': { en: '(Space to change)', 'zh-CN': '(空格切换)' },
   'tab.next': { en: 'Next →', 'zh-CN': '下一个 →' },
@@ -188,7 +187,7 @@ const DICT: Record<string, LocaleEntry> = {
 
   // ---------- launch / dry-run ----------
   'launch.willRun': { en: 'Will run: {cmd}', 'zh-CN': '将执行: {cmd}' },
-  'launch.dryTmp': { en: '(merged file: {file} — persisted on launch for review, dry-run does not create or launch)', 'zh-CN': '（合并文件: {file}，启动时持久化保存以便审查，dry-run 不创建、不启动）' },
+  'launch.dryTmp': { en: '(settings file: {file} — the provider config itself, passed directly to --settings; dry-run does not launch or create any file)', 'zh-CN': '（配置文件: {file}，即 provider 配置本身，直接作为 --settings 目标；dry-run 不启动、不创建文件）' },
   'launch.dryDefault': { en: '(default mode: no merge, no temp file — uses ~/.claude/settings.json as-is)', 'zh-CN': '（default 模式：不合并、无临时文件，直接用 ~/.claude/settings.json）' },
 
   // ---------- config ----------

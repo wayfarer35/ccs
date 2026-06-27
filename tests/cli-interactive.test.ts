@@ -12,7 +12,6 @@ const M = vi.hoisted(() => ({
   },
   launchMock: {
     launch: vi.fn(), dryRun: vi.fn(), launchDefault: vi.fn(), dryRunDefault: vi.fn(),
-    buildProviderSettings: vi.fn(() => ({ env: { ANTHROPIC_BASE_URL: 'https://x' } })),
     redactSettings: vi.fn((o: unknown) => o),
   },
   formMock: {

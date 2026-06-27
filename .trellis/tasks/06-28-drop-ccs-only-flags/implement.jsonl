@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "删字段涉及 ProviderSettings/FormState 契约与 exactOptionalPropertyTypes 下「可选字段只赋真值」模式；buildResult 的 never exhaustive 不能破坏"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "禁用模式（mutate 已有对象、ESM mock 用 vi.hoisted、process.exit 拦截）与 80% 覆盖率门槛、源文件↔测试一一对应"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "字段贯穿 types→launch→form→formUi→cli→config→i18n→测试 多层，删除时需核对每层边界无残留引用（AC6）"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Pre-Modification Rule：改任何值前先 grep；删除前确认调用点全改 readProvider，避免遗留死引用"}

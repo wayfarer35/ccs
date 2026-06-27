@@ -16,7 +16,7 @@
 - **源码 `.ts` 里写 `.ts` 导入扩展名**：`NodeNext` 要求写 `.js`（`import { ui } from './tui.js'`）。
 - **直接 `spyOn` ESM 模块命名空间**：不可配置；测试用 `vi.mock` + `vi.hoisted`。
 - **测试污染用户真实 `~/.ccs/`**：mock config 或备份/恢复（`tests/i18n.test.ts`、`tests/cli-interactive.test.ts`）。
-- **mutate 已有对象**：一律创建新对象（`{ ...obj, k: v }`），reducer/`stripCcsKeys`/`redactSettings` 都遵守。
+- **mutate 已有对象**：一律创建新对象（`{ ...obj, k: v }`），reducer/`redactSettings` 都遵守。
 - **在模板字面量里写 shell `${...}` 不转义**：`completion.ts` 的 `${COMP_WORDS[...]}` 必须写成 `\${...}`，否则被 JS 插值成空串，脚本静默失效。
 - **`process.exit` 在测试路径上真退出**：用 `interceptExit` 拦截（throw `exit:<code>`）。
 
@@ -26,7 +26,7 @@
 
 - **判别联合 + exhaustive check**：状态机用 `mode`/`kind` 判别字段，处理处补 `never` 分支（`form.ts:210`、`cli.ts` 的 `UsePick`）。
 - **Record 访问配 `?? ''` 兜底**：`noUncheckedIndexedAccess` 下索引返回 `T | undefined`（`env[k] ?? preset?.x ?? ''`）。
-- **可选字段只赋真值**：`exactOptionalPropertyTypes` 下 `dangerouslySkipPermissions?: true` 只赋 `true`，用 `if (cond) result.x = true;` 不写 else。
+- **可选字段只赋真值**：`exactOptionalPropertyTypes` 下可选字段（如 `ProviderSettings.model?: Tier`）只赋实值，用 `if (cond) result.model = ...;` 不写 else。
 - **边界校验回退默认不抛**：`parseBoolEnv`/`parseNumEnv`/`parseEffortEnv` 非法值回退默认；`readJSON` ENOENT 回退、解析错抛出。
 - **配置名校验**：`validateName`/`nameValidator` 拒绝空、路径分隔符、空白、`..`。
 - **不可变更新**：嵌套对象逐层展开。

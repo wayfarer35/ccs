@@ -8,21 +8,19 @@ vi.mock('node:child_process', () => ({
 }));
 
 import { launch, launchDefault } from '../src/launch.js';
-import { writeJSON, providerFile, ensureDirs, MERGED_DIR } from '../src/config.js';
-import { join } from 'node:path';
+import { writeJSON, providerFile, ensureDirs } from '../src/config.js';
 import { spawnSync } from 'node:child_process';
 
 const TEST_NAME = `__launch_spawn_${process.pid}`;
 
 function clean() {
   try { fs.rmSync(providerFile(TEST_NAME), { force: true }); } catch { /* ignore */ }
-  try { fs.rmSync(join(MERGED_DIR, `${TEST_NAME}.settings.json`), { force: true }); } catch { /* ignore */ }
 }
 beforeEach(() => { ensureDirs(); clean(); (spawnSync as unknown as ReturnType<typeof vi.fn>).mockClear(); });
 afterEach(clean);
 
 describe('launch', () => {
-  test('writes merged settings file, calls claude with --settings, sets lastUsed', () => {
+  test('calls claude with --settings pointing at provider file, sets lastUsed', () => {
     writeJSON(providerFile(TEST_NAME), { env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_AUTH_TOKEN: 'k' } });
     launch(TEST_NAME, ['--print', 'hi']);
     const calls = (spawnSync as unknown as ReturnType<typeof vi.fn>).mock.calls;
@@ -30,17 +28,14 @@ describe('launch', () => {
     const [bin, args] = calls[0]!;
     expect(bin).toBe('claude');
     expect(args[0]).toBe('--settings');
+    // --settings 直接指向 provider 配置文件本身（不再写中间文件）
+    expect(args[1]).toBe(providerFile(TEST_NAME));
     expect(args).toContain('--print');
     expect(args).toContain('hi');
-    // merged 文件已写入
-    expect(fs.existsSync(join(MERGED_DIR, `${TEST_NAME}.settings.json`))).toBe(true);
   });
 
-  test('forwards dangerouslySkipPermissions flag', () => {
-    writeJSON(providerFile(TEST_NAME), { env: {}, dangerouslySkipPermissions: true });
-    launch(TEST_NAME, []);
-    const args = (spawnSync as unknown as ReturnType<typeof vi.fn>).mock.calls[0]![1] as string[];
-    expect(args).toContain('--allow-dangerously-skip-permissions');
+  test('throws friendly error when provider missing', () => {
+    expect(() => launch(`__nonexistent_${process.pid}`, [])).toThrow();
   });
 
   test('sets exitCode on non-zero claude exit', () => {

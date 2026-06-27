@@ -170,14 +170,6 @@ describe('buildResult', () => {
     expect(r.env.ANTHROPIC_AUTH_TOKEN).toBeUndefined();
   });
 
-  test('dangerouslySkipPermissions only written when true', () => {
-    const s = initState({}, null);
-    s.dangerouslySkipPermissions = false;
-    expect(buildResult(s).dangerouslySkipPermissions).toBeUndefined();
-    s.dangerouslySkipPermissions = true;
-    expect(buildResult(s).dangerouslySkipPermissions).toBe(true);
-  });
-
   test('CLAUDE_CODE_* always serialized to env strings', () => {
     const s = initState({}, FULL_PRESET);
     const r: ProviderSettings = buildResult(s);

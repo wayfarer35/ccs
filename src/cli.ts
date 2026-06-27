@@ -10,12 +10,12 @@ import {
 } from './config.js';
 import { presetList } from './presets.js';
 import { providerFormWithPreview, chooseCreateMode, pickBuiltinPreset } from './form.js';
-import { launch, dryRun, launchDefault, dryRunDefault, buildProviderSettings, redactSettings } from './launch.js';
+import { launch, dryRun, launchDefault, dryRunDefault, redactSettings } from './launch.js';
 import { ui, Cancel } from './tui.js';
 import { t, detectLocale, setConfig, LOCALES } from './i18n.js';
 import { getVersion } from './version.js';
 import { completeCandidates, completionScript, completionHelp } from './completion.js';
-import type { Preset } from './types.js';
+import type { Preset, ProviderSettings } from './types.js';
 
 // 版本号单一真源：运行时从 package.json 读取，不再硬编码。
 const VERSION = getVersion();
@@ -27,7 +27,7 @@ Switch between multiple provider configs and launch Claude Code.
 Usage:
   ccs                        Pick a provider / default / create interactively, then launch
   ccs <name> [args...]       Launch with the named provider; args forwarded to claude
-  ccs <name> --dry-run       Print merged config + command without launching
+  ccs <name> --dry-run       Print provider config + command without launching
   ccs use [args...]          Pick a provider interactively and launch
   ccs list                   List provider configs
   ccs presets                List built-in presets
@@ -35,7 +35,7 @@ Usage:
   ccs edit <name> [--raw]    Guided edit (--raw: edit raw JSON in $EDITOR)
   ccs remove <name>          Remove a provider config
   ccs common                 Edit common config (~/.claude/settings.json) in $EDITOR
-  ccs show <name>            Show merged config (secrets redacted)
+  ccs show <name>            Show provider config (secrets redacted)
   ccs config [locale [en|zh-CN]]  Show/set language
   ccs completion <bash|zsh>  Print shell completion script
   ccs -h | --help            Help
@@ -57,7 +57,7 @@ Examples:
   ccs create myprov          Create a custom provider named myprov
   ccs deepseek-api           Launch with deepseek-api
   ccs deepseek-api --print "hi"   Forward args to claude
-  ccs show deepseek-api      Inspect merged result (common + provider)`;
+  ccs show deepseek-api      Inspect provider config (secrets redacted)`;
 
 const helpZh = `ccs ${VERSION} — Claude Code Switch
 
@@ -66,7 +66,7 @@ const helpZh = `ccs ${VERSION} — Claude Code Switch
 用法:
   ccs                        交互选择 供应商 / default / create 并启动
   ccs <name> [args...]       用指定供应商启动；args 透传给 claude
-  ccs <name> --dry-run       打印合并结果与命令，不启动
+  ccs <name> --dry-run       打印 provider 配置与命令，不启动
   ccs use [args...]          交互选择供应商并启动
   ccs list                   列出供应商配置
   ccs presets                列出可用预设
@@ -74,7 +74,7 @@ const helpZh = `ccs ${VERSION} — Claude Code Switch
   ccs edit <name> [--raw]    引导式编辑（--raw 用编辑器改原始 JSON）
   ccs remove <name>          删除供应商配置
   ccs common                 编辑通用配置（~/.claude/settings.json）
-  ccs show <name>            查看合并后的配置（密钥已遮蔽）
+  ccs show <name>            查看 provider 配置（密钥已遮蔽）
   ccs config [locale [en|zh-CN]]  查看/设置语言
   ccs completion <bash|zsh>  输出 shell 补全脚本
   ccs -h | --help            帮助
@@ -96,7 +96,7 @@ const helpZh = `ccs ${VERSION} — Claude Code Switch
   ccs create myprov          创建名为 myprov 的自定义供应商
   ccs deepseek-api           直接用 deepseek-api 启动
   ccs deepseek-api --print "hi"   透传参数给 claude
-  ccs show deepseek-api      检查合并结果（含 common 覆盖关系）`;
+  ccs show deepseek-api      查看 provider 配置（密钥已遮蔽）`;
 
 // 直接作为入口执行时才跑 main；被 import（如测试）时不自动运行。
 const isMain = (() => {
@@ -407,7 +407,8 @@ function cmdCommon(): void {
 function cmdShow(rest: string[]): void {
   const name = rest[0];
   if (!name) { console.error(t('usage.showName')); process.exit(1); }
-  const settings = buildProviderSettings(name);
+  const settings = readProvider<ProviderSettings>(name);
+  if (!settings) { console.error(t('error.providerMissing', { name })); process.exit(1); }
   console.log(JSON.stringify(redactSettings(settings), null, 2));
 }
 

@@ -72,10 +72,11 @@ amend 会改变 commit hash——仅适用于「本地刚提交、push 前完成
 
 ## 递增规则（ccs 项目约定）
 
-| commit 第一行前缀 | 递增 |
+| 提交类型 | 递增 |
 |---|---|
-| `fix:` / `fix(scope):` | patch++ |
-| 其它（feat/chore/docs/无前缀…） | minor++（patch 归零） |
-| major | 永远手动，hook 不动 |
+| 任意日常提交（任意前缀或无前缀） | patch++ |
+| minor / major | 手动 `npm version minor\|major`，hook 不动 |
 
-`bumpVersion(version, kind)` 纯函数不接受 `'major'`，调用方也从不传。纯函数与 `parseBumpKind` 均导出供单测。
+hook 一律只自动 `patch++`，不再按 commit 前缀区分。需要 minor/major 时用户手动 `npm version`——该命令改 `package.json` version 行，被守卫 5 识别后跳过 bump。
+
+`bumpVersion(version, kind)` 纯函数仅接受 `'patch'`，传 `'minor'`/`'major'` 抛 `unsupported kind`；调用方恒传 `'patch'`。纯函数导出供单测（已无 `parseBumpKind`）。

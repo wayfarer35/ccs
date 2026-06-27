@@ -34,12 +34,10 @@ export interface Preset {
  * 写进 provider 配置、最终透传给 claude --settings 的片段。
  * - env：环境变量（API key、base url、各档位别名、CLAUDE_CODE_* 等）
  * - model：仅 alias 模式下记录初始档位（供 ccs 启动参数与菜单展示）
- * - dangerouslySkipPermissions：ccs 自管 flag，不进入 --settings 片段，只赋 true
  */
 export interface ProviderSettings {
   env: Record<string, string>;
   model?: Tier;
-  dangerouslySkipPermissions?: true;
 }
 
 /** 表单模式：档位别名（多模型）或单一模型。 */
@@ -57,7 +55,6 @@ export interface FormState {
   aliases: Record<string, string>;
   singleModel: string;
   options: ProviderOptions;
-  dangerouslySkipPermissions: boolean;
 }
 
 /** 表单提交结果，等价于 ProviderSettings 片段。 */

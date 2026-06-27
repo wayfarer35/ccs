@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "审查清单 + 禁用模式 + 测试要求：核对不可变更新、ESM mock、覆盖率门槛、源文件↔测试对应"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "验证 strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes 下删字段后无类型残留、exhaustive check 仍成立"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "跨层核对：grep 零命中（AC6），确认 launch/dryRun/cmdShow 三处调用点均切到 readProvider+providerFile，无 dangling 引用"}

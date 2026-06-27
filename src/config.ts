@@ -9,8 +9,6 @@ export const PROVIDERS_DIR = join(CCS_DIR, 'providers');
 export const CONFIG_FILE = join(CCS_DIR, 'config.json');
 export const LASTUSED_FILE = join(CCS_DIR, '.lastused');
 export const CACHE_DIR = join(CCS_DIR, '.cache');
-/** 合并后的最终配置持久化目录，供用户审查 claude 实际加载的 settings。 */
-export const MERGED_DIR = join(CCS_DIR, 'merged');
 
 /** 通用配置来源：直接用 Claude Code 自身的 settings.json，ccs 只读不写。 */
 export const CLAUDE_SETTINGS_FILE = join(homedir(), '.claude', 'settings.json');
@@ -20,7 +18,6 @@ export const PROVIDER_SUFFIX = '.settings.json';
 export function ensureDirs() {
   mkdirSync(PROVIDERS_DIR, { recursive: true });
   mkdirSync(CACHE_DIR, { recursive: true });
-  mkdirSync(MERGED_DIR, { recursive: true });
 }
 
 /** 读取并解析 JSON 文件；ENOENT 返回 fallback，其余解析错误抛出。 */

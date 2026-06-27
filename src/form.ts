@@ -78,7 +78,6 @@ export function parseEffortEnv(v: string | undefined, def: EffortLevel): EffortL
 interface InitInput {
   env?: Record<string, string>;
   model?: string;
-  dangerouslySkipPermissions?: true;
 }
 
 /**
@@ -171,8 +170,6 @@ export function initState(initial: InitInput, preset: Preset | null): FormState 
     aliases,
     singleModel: env.ANTHROPIC_MODEL ?? preset?.model ?? '',
     options,
-    // 非 env 项：ccs 启动参数，存于 provider 配置顶层，由 launch 读取并转为 CLI flag。
-    dangerouslySkipPermissions: initial.dangerouslySkipPermissions === true,
   };
 }
 
@@ -220,9 +217,6 @@ export function buildResult(state: FormState): ProviderSettings {
   if (state.mode === 'alias') {
     // model 仅 alias 模式记录初始档位（供 ccs 启动参数与菜单展示）。
     result.model = state.tier as Tier;
-  }
-  if (state.dangerouslySkipPermissions) {
-    result.dangerouslySkipPermissions = true;
   }
   return result;
 }

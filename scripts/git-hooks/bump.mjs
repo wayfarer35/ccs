@@ -7,7 +7,8 @@
 //   pre-commit 能改 index 但拿不到 message（COMMIT_EDITMSG 尚未写入）。
 //   唯一能"读消息 + 改本次提交内容"的可靠途径是 post-commit + amend。
 //
-// 规则：fix:/fix(scope): → patch++；其它前缀 → minor++（patch 归零）；major 始终手动。
+// 规则：所有自动 bump 一律 patch+1；minor/major 由用户手动 `npm version minor|major`
+// （`npm version` 改了 package.json version 行，守卫 5 识别后跳过 bump，尊重手动值）。
 // 守卫（不 bump）：
 //   CCS_NO_BUMP=1 / CCS_BUMPING=1（防 amend 递归）/ merge commit / cherry-pick /
 //   本次提交已手动改 package.json version 行。
@@ -17,28 +18,17 @@ import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 /**
- * 按 kind 递增三段式版本号。
+ * 递增三段式版本号的 patch 段。
  * - 'patch'：patch+1（0.1.9 → 0.1.10）
- * - 'minor'：minor+1、patch 归零（0.1.9 → 0.2.0）
- * - 'major' 不支持（hook 永不自动改 major，由用户手动排板）。
+ * minor/major 不支持——hook 永不自动改，由用户手动 `npm version minor|major`。
  * 前导 `\d+.\d+.\d+` 之后的预发布/构建标记会被丢弃。
  */
 export function bumpVersion(version, kind) {
+  if (kind !== 'patch') throw new Error(`unsupported kind: ${kind}`); // minor/major 不进此函数
   const m = /^(\d+)\.(\d+)\.(\d+)/.exec(version);
   if (!m) throw new Error(`invalid version: ${version}`);
-  let [maj, min, pat] = [+m[1], +m[2], +m[3]];
-  if (kind === 'patch') pat += 1;
-  else if (kind === 'minor') { min += 1; pat = 0; }
-  else throw new Error(`unsupported kind: ${kind}`); // major 不进此函数
-  return `${maj}.${min}.${pat}`;
-}
-
-/**
- * 解析 commit message 第一行 → 'patch' | 'minor'。
- * fix: / fix(scope): → 'patch'；其余（feat/chore/docs/无前缀…）→ 'minor'。
- */
-export function parseBumpKind(firstLine) {
-  return /^\s*fix(\([^)]+\))?\s*:/i.test(firstLine) ? 'patch' : 'minor';
+  const [maj, min, pat] = [+m[1], +m[2], +m[3]];
+  return `${maj}.${min}.${pat + 1}`;
 }
 
 function sh(args, opts = {}) {
@@ -64,13 +54,9 @@ function main() {
     if (/^\+\s*"version"\s*:/m.test(diff)) process.exit(0);
   }
 
-  // 读刚提交的 commit message 第一行，按前缀判断递增段位
-  const firstLine = sh('git log -1 --format=%s').split('\n')[0] ?? '';
-  const kind = parseBumpKind(firstLine);
-
-  // bump + 写回（保持 2 空格缩进 + 尾随换行，与现有格式一致）
+  // 一律 patch+1；minor/major 由用户手动 `npm version`，不在此自动判断
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
-  pkg.version = bumpVersion(pkg.version, kind);
+  pkg.version = bumpVersion(pkg.version, 'patch');
   writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
 
   // 用 amend 把 version 并入本次提交；CCS_BUMPING=1 防止 amend 触发的 post-commit 递归 bump。

@@ -17,13 +17,6 @@ describe('bumpVersion', () => {
     expect(bumpVersion('0.0.0', 'patch')).toBe('0.0.1');
   });
 
-  test('minor bumps second segment and resets patch (0.1.9 → 0.2.0)', async () => {
-    const { bumpVersion } = await import('../scripts/git-hooks/bump.mjs');
-    expect(bumpVersion('0.1.9', 'minor')).toBe('0.2.0');
-    expect(bumpVersion('0.1.0', 'minor')).toBe('0.2.0');
-    expect(bumpVersion('1.9.9', 'minor')).toBe('1.10.0');
-  });
-
   test('strips prerelease/build metadata before bumping', async () => {
     const { bumpVersion } = await import('../scripts/git-hooks/bump.mjs');
     expect(bumpVersion('0.1.0-rc.1', 'patch')).toBe('0.1.1');
@@ -35,31 +28,10 @@ describe('bumpVersion', () => {
     expect(() => bumpVersion('1.2', 'patch')).toThrow(/invalid version/);
   });
 
-  test("throws on 'major' (never auto-bumped by hook)", async () => {
+  test("throws on 'minor' / 'major' (never auto-bumped by hook)", async () => {
     const { bumpVersion } = await import('../scripts/git-hooks/bump.mjs');
+    expect(() => bumpVersion('0.1.0', 'minor')).toThrow(/unsupported kind/);
     expect(() => bumpVersion('0.1.0', 'major')).toThrow(/unsupported kind/);
-  });
-});
-
-describe('parseBumpKind', () => {
-  test('fix: / fix(scope): → patch', async () => {
-    const { parseBumpKind } = await import('../scripts/git-hooks/bump.mjs');
-    expect(parseBumpKind('fix: x')).toBe('patch');
-    expect(parseBumpKind('fix(api): x')).toBe('patch');
-    expect(parseBumpKind('  fix: x')).toBe('patch');
-    expect(parseBumpKind('FIX: x')).toBe('patch');
-    expect(parseBumpKind('fix(scope): x')).toBe('patch');
-  });
-
-  test('其它前缀 / 无前缀 → minor', async () => {
-    const { parseBumpKind } = await import('../scripts/git-hooks/bump.mjs');
-    expect(parseBumpKind('feat: x')).toBe('minor');
-    expect(parseBumpKind('chore: x')).toBe('minor');
-    expect(parseBumpKind('docs: x')).toBe('minor');
-    expect(parseBumpKind('refactor: x')).toBe('minor');
-    expect(parseBumpKind('plain message')).toBe('minor');
-    expect(parseBumpKind('')).toBe('minor');
-    expect(parseBumpKind('fixiate: x')).toBe('minor');
   });
 });
 
@@ -124,12 +96,12 @@ describe('bump.mjs main (integration via real git commit)', () => {
     expect(headVersion(dir)).toBe('0.1.1'); // 关键：进了 HEAD
   });
 
-  test('feat: → minor+1, patch reset, lands in HEAD', () => {
+  test('feat: → patch+1 (all auto bumps are patch)', () => {
     const dir = newRepo();
     installHook(dir);
     commitFile(dir, 'a.txt', 'x', 'feat: new thing');
-    expect(readPkgVersion(dir)).toBe('0.2.0');
-    expect(headVersion(dir)).toBe('0.2.0');
+    expect(readPkgVersion(dir)).toBe('0.1.1');
+    expect(headVersion(dir)).toBe('0.1.1');
   });
 
   test('fix(scope): → patch+1', () => {
@@ -149,14 +121,14 @@ describe('bump.mjs main (integration via real git commit)', () => {
     expect(headVersion(dir)).toBe('0.1.10');
   });
 
-  test('minor carry: 0.1.9 --feat:--> 0.2.0', () => {
+  test('feat carry: 0.1.9 --feat:--> 0.1.10 (patch, not minor)', () => {
     const dir = newRepo();
     writePkg(dir, '0.1.9');
     execSync('git add package.json', { cwd: dir });
     execSync('git commit -q -m bump', { cwd: dir });
     installHook(dir);
     commitFile(dir, 'a.txt', 'x', 'feat: carry');
-    expect(headVersion(dir)).toBe('0.2.0');
+    expect(headVersion(dir)).toBe('0.1.10');
   });
 
   test('CCS_NO_BUMP=1 → no bump', () => {
@@ -185,10 +157,10 @@ describe('bump.mjs main (integration via real git commit)', () => {
     expect(headVersion(dir)).toBe('0.1.1');
   });
 
-  test('plain message (no prefix) → minor', () => {
+  test('plain message (no prefix) → patch', () => {
     const dir = newRepo();
     installHook(dir);
     commitFile(dir, 'a.txt', 'x', 'just a plain commit');
-    expect(headVersion(dir)).toBe('0.2.0');
+    expect(headVersion(dir)).toBe('0.1.1');
   });
 });

@@ -30,11 +30,10 @@ npm link        # 全局注册 ccs 命令
     myprov.settings.json
   config.json                       ccs 自身设置（如语言 locale）
   presets.json                      自定义/覆盖预设（可选）
-  merged/<name>.settings.json       启动时写入的供应商片段（即 --settings 目标，保留供审查）
   .lastused                         记录上次选择（仅用于交互高亮）
 ```
 
-每个 provider 文件都是标准的 Claude Code settings 片段。启动时 ccs 只剥离自身管理的 key（如 `dangerouslySkipPermissions`），把片段写入 `~/.ccs/merged/<name>.settings.json`，执行 `claude --settings <该文件>`，同时把片段里的 `env` 注入子进程（双保险）。**不做手动合并**——claude 加载 `--settings` 时会自行与 user/project settings 深合，片段里出现的 key 覆盖下层；ccs 只需把要覆盖的 key 填全。每次启动都重写片段，改了通用配置立刻生效。
+每个 provider 文件都是标准的 Claude Code settings 片段。启动时 ccs 直接执行 `claude --settings ~/.ccs/providers/<name>.settings.json`，把该文件原样作为 `--settings` 目标——不解析、不剥离、不写中间文件、不注入子进程 env。**不做手动合并**——claude 加载 `--settings` 时会自行与 user/project settings 深合，片段里出现的 key 覆盖下层；ccs 只需把要覆盖的 key 填全。
 
 供应商 `env` 还会始终带上四项 `CLAUDE_CODE_*` 配置（见下文「环境变量」），可在创建/编辑表单的 Options Tab 调整。
 
@@ -74,7 +73,7 @@ ccs -h                   # 帮助
 
 1. **API Key** — Base URL + API Key/Token（编辑时留空保留原值）。
 2. **Models** — 档位别名模式（`settings.model` + 各档位 `ANTHROPIC_DEFAULT_*_MODEL`）或单模型模式（`ANTHROPIC_MODEL`）。
-3. **Options** — 四项 `CLAUDE_CODE_*` 配置（attribution / non-essential traffic / auto-compact window / effort）+ `dangerouslySkipPermissions` 开关。
+3. **Options** — 四项 `CLAUDE_CODE_*` 配置（attribution / non-essential traffic / auto-compact window / effort）。
 4. **Review** — 脱敏预览 settings 片段，校验并确认保存。
 
 ## 内置预设
@@ -127,8 +126,6 @@ ccs -h                   # 帮助
 - `CLAUDE_CODE_AUTO_COMPACT_WINDOW`：自动压缩窗口，token 数（默认 `200000`）。
 - `CLAUDE_CODE_EFFORT_LEVEL`：推理强度（`low`/`medium`/`high`/`xhigh`/`max`，默认 `max`）。
 
-> `dangerouslySkipPermissions` 是 ccs 自管开关（不进入 `--settings` 片段），开启后启动时透传 `--allow-dangerously-skip-permissions`（仅允许会话内切到 bypass 模式，不全程绕过）。
-
 ## Shell 补全
 
 `ccs` 支持 bash 与 zsh 的 tab 补全：补全子命令、已有 provider 名、preset key，且上下文感知（如 `ccs show <Tab>` 只补 provider 名，`ccs create <Tab>` 只补 preset key）。
@@ -146,15 +143,16 @@ eval "$(ccs completion zsh)"    # zsh；需已 compinit
 
 ## 版本自增
 
-项目版本号随每次 git commit 按前缀自动递增，单一真源为 `package.json` 的 `version`（`ccs --version` 与之始终一致）。
+项目版本号随每次 git commit 自动递增，单一真源为 `package.json` 的 `version`（`ccs --version` 与之始终一致）。
 
 **规则（三段式 `major.minor.patch`）：**
 
-| commit message 第一行前缀 | 递增 | 例 |
+| 提交类型 | 递增 | 例 |
 |---|---|---|
-| `fix:` / `fix(scope):` | patch++ | `0.1.9 → 0.1.10` |
-| 其它（feat/chore/docs/refactor/…，甚至无前缀） | minor++（patch 归零） | `0.1.9 → 0.2.0` |
-| major | **始终手动**，hook 永不自动改 | — |
+| 任意日常提交（无论 `fix:`/`feat:`/`chore:`/…/无前缀） | patch++ | `0.1.12 → 0.1.13` |
+| minor / major | **手动** `npm version minor\|major` | `0.1.13 → 0.2.0` |
+
+hook 一律只自动 `patch++`；需要提升 minor 或 major 时由用户手动 `npm version minor` / `npm version major`——`npm version` 会改 `package.json` 的 version 行，hook 识别后跳过 bump，尊重手动值。
 
 **安装 hook：**
 
@@ -163,14 +161,14 @@ npm run hooks:install
 # → 把 post-commit + bump.mjs 复制到 .git/hooks/，幂等覆盖
 ```
 
-安装后 `.git/hooks/post-commit` 存在且可执行。提交时 hook 读 commit message 前缀，bump 版本号，并用 `git commit --amend --no-edit` 把变更并入本次提交（commit hash 会因 amend 改变，属正常）。无需 husky，零运行时依赖。
+安装后 `.git/hooks/post-commit` 存在且可执行。提交时 hook 把 patch+1 写回 `package.json`，并用 `git commit --amend --no-edit` 把变更并入本次提交（commit hash 会因 amend 改变，属正常）。无需 husky，零运行时依赖。
 
 **跳过 bump 的情形：**
 
 - `CCS_NO_BUMP=1 git commit ...` — 显式禁用本次 bump。
 - merge commit（多父提交）— 自动跳过。
 - cherry-pick 进行中（`.git/CHERRY_PICK_HEAD` 存在）— 跳过。
-- 当次已手动改 `package.json` 的 version 行并提交 — hook 尊重手动值，不重复 bump。
+- 当次已手动改 `package.json` 的 version 行并提交（含 `npm version`）— hook 尊重手动值，不重复 bump。
 - hook 自身触发的 amend（`CCS_BUMPING=1`）— 防递归，不再 bump。
 
 > 用 `post-commit` + `--amend`：`prepare-commit-msg`/`commit-msg` 运行时 commit 的 tree 已锁定，`git add` 进不了本次提交；`pre-commit` 能改 index 但拿不到 message。只有 `post-commit` 能在 commit 创建后读 `git log -1` 消息，再 amend 把 version 并入——这是唯一可靠的"读消息 + 改本次提交"途径。
