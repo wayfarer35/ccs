@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1782551803405" clover="3.2.0">
-  <project timestamp="1782551803406" name="All files">
+<coverage generated="1782553140185" clover="3.2.0">
+  <project timestamp="1782553140185" name="All files">
     <metrics statements="387" coveredstatements="361" conditionals="314" coveredconditionals="260" methods="95" coveredmethods="95" elements="796" coveredelements="716" complexity="0" loc="387" ncloc="387" packages="1" files="7" classes="7"/>
     <file name="cli.ts" path="/home/evan/workspace/ccs/src/cli.ts">
       <metrics statements="170" coveredstatements="149" conditionals="134" coveredconditionals="96" methods="26" coveredmethods="26"/>
@@ -88,7 +88,7 @@
       <line num="259" count="0" type="stmt"/>
       <line num="261" count="3" type="stmt"/>
       <line num="262" count="3" type="stmt"/>
-      <line num="263" count="8" type="cond" truecount="1" falsecount="1"/>
+      <line num="263" count="7" type="cond" truecount="1" falsecount="1"/>
       <line num="264" count="3" type="stmt"/>
       <line num="268" count="2" type="stmt"/>
       <line num="269" count="2" type="stmt"/>
@@ -188,8 +188,8 @@
       <line num="21" count="37" type="stmt"/>
       <line num="22" count="37" type="stmt"/>
       <line num="23" count="37" type="stmt"/>
-      <line num="28" count="233" type="stmt"/>
-      <line num="29" count="233" type="stmt"/>
+      <line num="28" count="208" type="stmt"/>
+      <line num="29" count="208" type="stmt"/>
       <line num="31" count="12" type="cond" truecount="2" falsecount="0"/>
       <line num="32" count="1" type="stmt"/>
       <line num="37" count="35" type="stmt"/>
@@ -203,9 +203,9 @@
       <line num="61" count="22" type="stmt"/>
       <line num="62" count="22" type="stmt"/>
       <line num="63" count="22" type="stmt"/>
-      <line num="64" count="60" type="stmt"/>
-      <line num="65" count="60" type="stmt"/>
-      <line num="66" count="38" type="stmt"/>
+      <line num="64" count="59" type="stmt"/>
+      <line num="65" count="59" type="stmt"/>
+      <line num="66" count="37" type="stmt"/>
       <line num="70" count="22" type="cond" truecount="1" falsecount="1"/>
       <line num="74" count="7" type="stmt"/>
       <line num="78" count="4" type="stmt"/>
@@ -290,24 +290,24 @@
     </file>
     <file name="i18n.ts" path="/home/evan/workspace/ccs/src/i18n.ts">
       <metrics statements="18" coveredstatements="18" conditionals="19" coveredconditionals="15" methods="5" coveredmethods="5"/>
-      <line num="8" count="8" type="stmt"/>
-      <line num="13" count="16" type="stmt"/>
-      <line num="21" count="224" type="cond" truecount="1" falsecount="1"/>
+      <line num="8" count="7" type="stmt"/>
+      <line num="13" count="14" type="stmt"/>
+      <line num="21" count="199" type="cond" truecount="1" falsecount="1"/>
       <line num="26" count="13" type="stmt"/>
       <line num="27" count="13" type="stmt"/>
       <line num="28" count="13" type="stmt"/>
-      <line num="36" count="209" type="stmt"/>
-      <line num="37" count="209" type="cond" truecount="4" falsecount="0"/>
+      <line num="36" count="184" type="stmt"/>
+      <line num="37" count="184" type="cond" truecount="4" falsecount="0"/>
       <line num="38" count="4" type="cond" truecount="3" falsecount="1"/>
-      <line num="39" count="209" type="cond" truecount="2" falsecount="0"/>
-      <line num="44" count="8" type="stmt"/>
-      <line num="209" count="201" type="stmt"/>
-      <line num="210" count="201" type="stmt"/>
-      <line num="211" count="201" type="cond" truecount="3" falsecount="2"/>
-      <line num="212" count="201" type="cond" truecount="2" falsecount="0"/>
-      <line num="213" count="54" type="stmt"/>
-      <line num="214" count="54" type="stmt"/>
-      <line num="217" count="201" type="stmt"/>
+      <line num="39" count="184" type="cond" truecount="2" falsecount="0"/>
+      <line num="44" count="7" type="stmt"/>
+      <line num="209" count="178" type="stmt"/>
+      <line num="210" count="178" type="stmt"/>
+      <line num="211" count="178" type="cond" truecount="3" falsecount="2"/>
+      <line num="212" count="178" type="cond" truecount="2" falsecount="0"/>
+      <line num="213" count="53" type="stmt"/>
+      <line num="214" count="53" type="stmt"/>
+      <line num="217" count="178" type="stmt"/>
     </file>
     <file name="launch.ts" path="/home/evan/workspace/ccs/src/launch.ts">
       <metrics statements="65" coveredstatements="62" conditionals="43" coveredconditionals="37" methods="12" coveredmethods="12"/>
