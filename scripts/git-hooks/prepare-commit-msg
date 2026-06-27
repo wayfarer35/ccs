@@ -1,0 +1,5 @@
+#!/bin/sh
+# prepare-commit-msg 入口：把参数透传给 bump.mjs。
+# $1 = 临时 message 文件路径；$2 = source ∈ {message,template,merge,squash,commit}。
+# 此文件与 bump.mjs 一同被 install.mjs 复制到 .git/hooks/。
+exec node "$(dirname "$0")/bump.mjs" "$@"

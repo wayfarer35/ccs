@@ -32,6 +32,7 @@ vi.mock('../src/i18n.js', () => ({
 }));
 
 import { main, printHelp } from '../src/cli.js';
+import { getVersion } from '../src/version.js';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -56,7 +57,7 @@ describe('main argv dispatch', () => {
   test('-v/--version → prints version', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     await runMain(['--version']);
-    expect(log).toHaveBeenCalledWith('0.1.0');
+    expect(log).toHaveBeenCalledWith(getVersion());
     log.mockRestore();
   });
 

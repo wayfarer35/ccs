@@ -13,9 +13,12 @@ import { providerFormWithPreview, chooseCreateMode, pickBuiltinPreset } from './
 import { launch, dryRun, launchDefault, dryRunDefault, buildProviderSettings, redactSettings } from './launch.js';
 import { ui, Cancel } from './tui.js';
 import { t, detectLocale, setConfig, LOCALES } from './i18n.js';
+import { getVersion } from './version.js';
+import { completeCandidates, completionScript, completionHelp } from './completion.js';
 import type { Preset } from './types.js';
 
-const VERSION = '0.1.0';
+// 版本号单一真源：运行时从 package.json 读取，不再硬编码。
+const VERSION = getVersion();
 
 const helpEn = `ccs ${VERSION} — Claude Code Switch
 
@@ -34,6 +37,7 @@ Usage:
   ccs common                 Edit common config (~/.claude/settings.json) in $EDITOR
   ccs show <name>            Show merged config (secrets redacted)
   ccs config [locale [en|zh-CN]]  Show/set language
+  ccs completion <bash|zsh>  Print shell completion script
   ccs -h | --help            Help
   ccs -v | --version         Version
 
@@ -72,6 +76,7 @@ const helpZh = `ccs ${VERSION} — Claude Code Switch
   ccs common                 编辑通用配置（~/.claude/settings.json）
   ccs show <name>            查看合并后的配置（密钥已遮蔽）
   ccs config [locale [en|zh-CN]]  查看/设置语言
+  ccs completion <bash|zsh>  输出 shell 补全脚本
   ccs -h | --help            帮助
   ccs -v | --version         版本
 
@@ -114,6 +119,8 @@ async function main(): Promise<void> {
     if (cmd === '-h' || cmd === '--help' || cmd === 'help') return printHelp();
     if (!cmd) return await cmdUse(rest);
     if (cmd === '-v' || cmd === '--version') { console.log(VERSION); return; }
+    // 隐藏命令：供 shell 补全脚本回调，输出候选项（每行一个）。
+    if (cmd === '__complete') { printCandidates(rest); return; }
 
     switch (cmd) {
       case 'list': case 'ls': return cmdList();
@@ -125,6 +132,7 @@ async function main(): Promise<void> {
       case 'show': return cmdShow(rest);
       case 'config': return await cmdConfig(rest);
       case 'use': return await cmdUse(rest);
+      case 'completion': return cmdCompletion(rest);
       default:
         if (cmd.startsWith('-')) {
           // 裸 ccs 直接跟参数（如 `ccs --dangerously-skip-permissions`）：
@@ -272,6 +280,22 @@ function cmdPresets(): void {
   }
   console.log(`\n${t('presets.footer')}`);
   console.log(t('presets.userFile'));
+}
+
+// ---------- completion ----------
+
+/** 隐藏命令 `ccs __complete <words...>`：逐行打印候选。 */
+function printCandidates(words: string[]): void {
+  for (const c of completeCandidates(words)) console.log(c);
+}
+
+/** `ccs completion <shell>`：输出补全脚本或提示。 */
+function cmdCompletion(rest: string[]): void {
+  const shell = rest[0];
+  if (!shell) { console.log(completionHelp()); return; }
+  const script = completionScript(shell);
+  if (!script) { console.log(completionHelp(shell)); return; }
+  process.stdout.write(script);
 }
 
 // ---------- create / edit / remove ----------

@@ -1,0 +1,29 @@
+{
+  "id": "completion-and-versioning",
+  "name": "completion-and-versioning",
+  "title": "ccs tab 补全与版本号自增",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "evan",
+  "assignee": "evan",
+  "createdAt": "2026-06-27",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "06-27-cli-completion",
+    "06-27-version-auto-bump"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

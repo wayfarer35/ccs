@@ -151,6 +151,51 @@ ccs init
 - `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`：是否禁用非必要流量/遥测（`1`/`0`，默认 `1`）。
 - `CLAUDE_CODE_AUTO_COMPACT_WINDOW`：自动压缩窗口，token 数（默认 `200000`）。
 
+## Shell 补全
+
+`ccs` 支持 bash 与 zsh 的 tab 补全：补全子命令、已有 provider 名、preset key，且上下文感知（如 `ccs show <Tab>` 只补 provider 名，`ccs create <Tab>` 只补 preset key）。
+
+**自动安装（推荐）**：全局安装 `npm install -g ccs` 时会自动把补全 `eval` 行写入 `~/.bashrc` 与 `~/.zshrc`（幂等，重复安装/升级不重复追加）。重开终端即可用。非全局安装（作为依赖）不会修改任何 rc 文件。
+
+**手动安装**：
+
+```bash
+eval "$(ccs completion bash)"   # bash；或追加到 ~/.bashrc
+eval "$(ccs completion zsh)"    # zsh；需已 compinit
+```
+
+**卸载**：删除 `~/.bashrc` / `~/.zshrc` 中 `# >>> ccs completion >>>` 到 `# <<< ccs completion <<<` 之间的行。
+
+## 版本自增
+
+项目版本号随每次 git commit 按前缀自动递增，单一真源为 `package.json` 的 `version`（`ccs --version` 与之始终一致）。
+
+**规则（三段式 `major.minor.patch`）：**
+
+| commit message 第一行前缀 | 递增 | 例 |
+|---|---|---|
+| `fix:` / `fix(scope):` | patch++ | `0.1.9 → 0.1.10` |
+| 其它（feat/chore/docs/refactor/…，甚至无前缀） | minor++（patch 归零） | `0.1.9 → 0.2.0` |
+| major | **始终手动**，hook 永不自动改 | — |
+
+**安装 hook：**
+
+```bash
+npm run hooks:install
+# → 把 prepare-commit-msg + bump.mjs 复制到 .git/hooks/，幂等覆盖
+```
+
+安装后 `.git/hooks/prepare-commit-msg` 存在且可执行，提交时自动 bump 并把 `package.json` 纳入本次提交。无需 husky，零运行时依赖。
+
+**跳过 bump 的情形：**
+
+- `CCS_NO_BUMP=1 git commit ...` — 显式禁用本次 bump。
+- `git commit --amend` / merge commit / squash — `prepare-commit-msg` 的 source 参数天然识别，自动跳过。
+- cherry-pick 进行中（`.git/CHERRY_PICK_HEAD` 存在）— 跳过。
+- 当次已手动改 `package.json` 的 version 行并 stage — hook 尊重手动值，不重复 bump。
+
+> 用 `prepare-commit-msg` 而非 `pre-commit`：前者能拿到 commit message 用于前缀判断，其 source 参数天然区分 amend/merge/squash；且此阶段 index 仍可 `git add`，使版本变更随该次提交入库。
+
 ## 许可
 
 MIT
