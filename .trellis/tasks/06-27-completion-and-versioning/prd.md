@@ -30,14 +30,14 @@
 
 ## Acceptance Criteria（跨子任务集成）
 
-- [ ] `eval "$(ccs completion bash)"` 后，`ccs <Tab>` 列出全部子命令与已有 provider 名；`ccs show <Tab>` 仅列 provider 名；`ccs create <Tab>` 列 preset key；`ccs config locale <Tab>` 列 `en zh-CN`。
-- [ ] zsh 下 `compdef` 等价补全同样生效。
-- [ ] `npm install -g ccs` 自动把补全 `eval` 行写入 `~/.bashrc` 与 `~/.zshrc`（幂等）；非全局安装不写。
-- [ ] `ccs --version` 与 `package.json` 的 `version` 字段始终一致（单一真源）。
-- [ ] `fix: xxx` 提交 → patch +1（`0.1.9→0.1.10`）；`feat: xxx` 等其它前缀提交 → minor +1、patch 归零（`0.1.9→0.2.0`）；major 仅手动。
-- [ ] `git commit --amend` / merge / squash / `CCS_NO_BUMP=1 git commit` / 手动已改 version 行 均不 bump。
-- [ ] `npm test` 全绿；新增/改动覆盖率达 80% 门槛（`formUi` 除外）。
-- [ ] README 补一节「Shell 补全」与「版本自增」使用说明。
+- [x] `eval "$(ccs completion bash)"` 后，`ccs <Tab>` 列出全部子命令与已有 provider 名；`ccs show <Tab>` 仅列 provider 名；`ccs create <Tab>` 列 preset key；`ccs config locale <Tab>` 列 `en zh-CN`。
+- [x] zsh 下 `compdef` 等价补全同样生效。
+- [x] `npm install -g ccs` 自动把补全 `eval` 行写入 `~/.bashrc` 与 `~/.zshrc`（幂等）；非全局安装不写。
+- [x] `ccs --version` 与 `package.json` 的 `version` 字段始终一致（单一真源）。
+- [x] `fix: xxx` 提交 → patch +1（`0.1.9→0.1.10`）；`feat: xxx` 等其它前缀提交 → minor +1、patch 归零（`0.1.9→0.2.0`）；major 仅手动。
+- [x] `git commit --amend` / merge / squash / `CCS_NO_BUMP=1 git commit` / 手动已改 version 行 均不 bump。
+- [x] `npm test` 全绿；新增/改动覆盖率达 80% 门槛（`formUi` 除外）。
+- [x] README 补一节「Shell 补全」与「版本自增」使用说明。
 
 ## Notes
 
