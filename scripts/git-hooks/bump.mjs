@@ -1,9 +1,16 @@
-// prepare-commit-msg hook：按 commit message 前缀自增 package.json 版本号。
+// post-commit hook：按刚提交的 commit message 前缀自增 package.json 版本号，
+// 并用 `git commit --amend --no-edit` 把版本变更并入本次提交。
 // 纯 Node ESM，零运行时依赖。由 scripts/git-hooks/install.mjs 复制到 .git/hooks/。
 //
+// 为什么用 post-commit 而非 prepare-commit-msg：
+//   prepare-commit-msg 时 commit 的 tree 已锁定，`git add` 无法进入本次提交。
+//   pre-commit 能改 index 但拿不到 message（COMMIT_EDITMSG 尚未写入）。
+//   唯一能"读消息 + 改本次提交内容"的可靠途径是 post-commit + amend。
+//
 // 规则：fix:/fix(scope): → patch++；其它前缀 → minor++（patch 归零）；major 始终手动。
-// 守卫（不 bump）：CCS_NO_BUMP=1 / source∈{merge,squash,commit}(amend) /
-//                  CHERRY_PICK_HEAD 存在 / 当次已手动改 package.json version 行。
+// 守卫（不 bump）：
+//   CCS_NO_BUMP=1 / CCS_BUMPING=1（防 amend 递归）/ merge commit / cherry-pick /
+//   本次提交已手动改 package.json version 行。
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
@@ -34,33 +41,45 @@ export function parseBumpKind(firstLine) {
   return /^\s*fix(\([^)]+\))?\s*:/i.test(firstLine) ? 'patch' : 'minor';
 }
 
-function main() {
-  const msgFile = process.argv[2];
-  const source = process.argv[3];
+function sh(args, opts = {}) {
+  return execSync(args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], ...opts });
+}
 
-  // 守卫 1：显式禁用
+function main() {
+  // 守卫 1：显式禁用本次 bump
   if (process.env.CCS_NO_BUMP === '1') process.exit(0);
-  // 守卫 2：amend(--amend→'commit') / merge / squash 天然跳过
-  if (['merge', 'squash', 'commit'].includes(source)) process.exit(0);
-  // 守卫 3：cherry-pick 进行中
+  // 守卫 2：amend 递归保护——本 hook 自身触发的 amend 不再 bump
+  if (process.env.CCS_BUMPING === '1') process.exit(0);
+  // 守卫 3：cherry-pick 进行中（post-commit 阶段 CHERRY_PICK_HEAD 仍存在）
   if (existsSync('.git/CHERRY_PICK_HEAD')) process.exit(0);
 
-  // 守卫 4：当次已手动改 package.json 的 version 行 → 尊重，不重复 bump
-  const staged = execSync('git diff --cached --name-only', { encoding: 'utf8' });
-  if (staged.split('\n').includes('package.json')) {
-    const diff = execSync('git diff --cached -- package.json', { encoding: 'utf8' });
+  // 守卫 4：merge commit（多父）跳过
+  const parents = sh('git rev-list --parents -n 1 HEAD').trim().split(/\s+/);
+  if (parents.length > 2) process.exit(0); // HEAD + 2 个父 = merge
+
+  // 守卫 5：本次提交已手动改 package.json version 行 → 尊重，不重复 bump
+  const diffStat = sh('git show --name-only --format= HEAD -- package.json');
+  if (diffStat.includes('package.json')) {
+    const diff = sh('git show HEAD -- package.json');
     if (/^\+\s*"version"\s*:/m.test(diff)) process.exit(0);
   }
 
-  // 读 commit message 第一行，按前缀判断递增段位
-  const firstLine = readFileSync(msgFile, 'utf8').split('\n')[0] ?? '';
+  // 读刚提交的 commit message 第一行，按前缀判断递增段位
+  const firstLine = sh('git log -1 --format=%s').split('\n')[0] ?? '';
   const kind = parseBumpKind(firstLine);
 
-  // bump + 写回（保持 2 空格缩进 + 尾随换行，与现有格式一致）+ stage 入本次提交
+  // bump + 写回（保持 2 空格缩进 + 尾随换行，与现有格式一致）
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
   pkg.version = bumpVersion(pkg.version, kind);
   writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-  execSync('git add package.json');
+
+  // 用 amend 把 version 并入本次提交；CCS_BUMPING=1 防止 amend 触发的 post-commit 递归 bump。
+  // --no-edit 保留原 message；GIT_EDITOR=true 兜底，确保任何环境都不卡在编辑器。
+  execSync('git add package.json', { stdio: 'ignore' });
+  execSync('git commit --amend --no-edit', {
+    stdio: 'ignore',
+    env: { ...process.env, CCS_BUMPING: '1', GIT_EDITOR: 'true' },
+  });
 }
 
 // 仅当直接执行（非被 import 测试）时跑 main

@@ -182,19 +182,20 @@ eval "$(ccs completion zsh)"    # zsh；需已 compinit
 
 ```bash
 npm run hooks:install
-# → 把 prepare-commit-msg + bump.mjs 复制到 .git/hooks/，幂等覆盖
+# → 把 post-commit + bump.mjs 复制到 .git/hooks/，幂等覆盖
 ```
 
-安装后 `.git/hooks/prepare-commit-msg` 存在且可执行，提交时自动 bump 并把 `package.json` 纳入本次提交。无需 husky，零运行时依赖。
+安装后 `.git/hooks/post-commit` 存在且可执行。提交时 hook 读 commit message 前缀，bump 版本号，并用 `git commit --amend --no-edit` 把变更并入本次提交（commit hash 会因 amend 改变，属正常）。无需 husky，零运行时依赖。
 
 **跳过 bump 的情形：**
 
 - `CCS_NO_BUMP=1 git commit ...` — 显式禁用本次 bump。
-- `git commit --amend` / merge commit / squash — `prepare-commit-msg` 的 source 参数天然识别，自动跳过。
+- merge commit（多父提交）— 自动跳过。
 - cherry-pick 进行中（`.git/CHERRY_PICK_HEAD` 存在）— 跳过。
-- 当次已手动改 `package.json` 的 version 行并 stage — hook 尊重手动值，不重复 bump。
+- 当次已手动改 `package.json` 的 version 行并提交 — hook 尊重手动值，不重复 bump。
+- hook 自身触发的 amend（`CCS_BUMPING=1`）— 防递归，不再 bump。
 
-> 用 `prepare-commit-msg` 而非 `pre-commit`：前者能拿到 commit message 用于前缀判断，其 source 参数天然区分 amend/merge/squash；且此阶段 index 仍可 `git add`，使版本变更随该次提交入库。
+> 用 `post-commit` + `--amend`：`prepare-commit-msg`/`commit-msg` 运行时 commit 的 tree 已锁定，`git add` 进不了本次提交；`pre-commit` 能改 index 但拿不到 message。只有 `post-commit` 能在 commit 创建后读 `git log -1` 消息，再 amend 把 version 并入——这是唯一可靠的"读消息 + 改本次提交"途径。
 
 ## 许可
 

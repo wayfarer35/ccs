@@ -1,8 +1,8 @@
 import { describe, test, expect, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
-import { execSync, spawnSync } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const BUMP = join(dirname(fileURLToPath(import.meta.url)), '..', 'scripts', 'git-hooks', 'bump.mjs');
@@ -46,8 +46,8 @@ describe('parseBumpKind', () => {
     const { parseBumpKind } = await import('../scripts/git-hooks/bump.mjs');
     expect(parseBumpKind('fix: x')).toBe('patch');
     expect(parseBumpKind('fix(api): x')).toBe('patch');
-    expect(parseBumpKind('  fix: x')).toBe('patch'); // 前导空白
-    expect(parseBumpKind('FIX: x')).toBe('patch'); // 大小写不敏感
+    expect(parseBumpKind('  fix: x')).toBe('patch');
+    expect(parseBumpKind('FIX: x')).toBe('patch');
     expect(parseBumpKind('fix(scope): x')).toBe('patch');
   });
 
@@ -59,11 +59,14 @@ describe('parseBumpKind', () => {
     expect(parseBumpKind('refactor: x')).toBe('minor');
     expect(parseBumpKind('plain message')).toBe('minor');
     expect(parseBumpKind('')).toBe('minor');
-    expect(parseBumpKind('fixiate: x')).toBe('minor'); // 非 fix 前缀
+    expect(parseBumpKind('fixiate: x')).toBe('minor');
   });
 });
 
-// ---------- 集成：临时 git repo 跑 bump.mjs 主流程 ----------
+// ---------- 集成：临时 git repo 跑 post-commit bump ----------
+//
+// post-commit hook 在 commit 创建后运行，读 git log -1 message 并 amend version 进本次提交。
+// 测试方式：在临时 repo 装好 post-commit hook，做真实 git commit，验证 HEAD 内 version 已 bump。
 
 let repo: string | null = null;
 
@@ -92,45 +95,48 @@ function readPkgVersion(dir: string): string {
   return (JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { version: string }).version;
 }
 
-function writeMsg(dir: string, text: string): string {
-  const f = join(dir, 'MSG');
-  writeFileSync(f, text);
-  return f;
+function headVersion(dir: string): string {
+  const v = execSync('git show HEAD:package.json', { cwd: dir, encoding: 'utf8' });
+  return (JSON.parse(v) as { version: string }).version;
 }
 
-function runBump(dir: string, msgFile: string, source: string | undefined, env: Record<string, string> = {}): void {
-  const args = [BUMP, msgFile];
-  if (source !== undefined) args.push(source);
-  const res = spawnSync('node', args, { cwd: dir, env: { ...process.env, ...env }, encoding: 'utf8' });
-  if (res.status !== 0) throw new Error(`bump.mjs failed (exit ${res.status}):\nstderr: ${res.stderr}\nstdout: ${res.stdout}`);
+function installHook(dir: string): void {
+  const hooksDir = join(dir, '.git', 'hooks');
+  writeFileSync(join(hooksDir, 'post-commit'), `#!/bin/sh\nexec node "${BUMP}"\n`);
+  execSync(`chmod +x ${join(hooksDir, 'post-commit')}`);
 }
 
-function stagedFiles(dir: string): string {
-  return execSync('git diff --cached --name-only', { cwd: dir, encoding: 'utf8' }).trim();
+function commitFile(dir: string, path: string, content: string, message: string, env: Record<string, string> = {}): void {
+  writeFileSync(join(dir, path), content);
+  execSync(`git add ${path}`, { cwd: dir });
+  execSync(`git commit -q -m "${message.replace(/"/g, '\\"')}"`, {
+    cwd: dir,
+    env: { ...process.env, ...env },
+  });
 }
 
-describe('bump.mjs main (integration)', () => {
-  test('fix: → patch+1 and stages package.json', () => {
+describe('bump.mjs main (integration via real git commit)', () => {
+  test('fix: → patch+1, version lands in HEAD commit', () => {
     const dir = newRepo();
-    const msg = writeMsg(dir, 'fix: a bug\n\nbody');
-    runBump(dir, msg, 'message');
+    installHook(dir);
+    commitFile(dir, 'a.txt', 'x', 'fix: a bug');
     expect(readPkgVersion(dir)).toBe('0.1.1');
-    expect(stagedFiles(dir)).toBe('package.json');
+    expect(headVersion(dir)).toBe('0.1.1'); // 关键：进了 HEAD
   });
 
-  test('feat: → minor+1, patch reset, stages package.json', () => {
+  test('feat: → minor+1, patch reset, lands in HEAD', () => {
     const dir = newRepo();
-    const msg = writeMsg(dir, 'feat: new thing');
-    runBump(dir, msg, 'message');
+    installHook(dir);
+    commitFile(dir, 'a.txt', 'x', 'feat: new thing');
     expect(readPkgVersion(dir)).toBe('0.2.0');
-    expect(stagedFiles(dir)).toBe('package.json');
+    expect(headVersion(dir)).toBe('0.2.0');
   });
 
   test('fix(scope): → patch+1', () => {
     const dir = newRepo();
-    const msg = writeMsg(dir, 'fix(api): scope bug');
-    runBump(dir, msg, 'message');
-    expect(readPkgVersion(dir)).toBe('0.1.1');
+    installHook(dir);
+    commitFile(dir, 'a.txt', 'x', 'fix(api): scope bug');
+    expect(headVersion(dir)).toBe('0.1.1');
   });
 
   test('patch carry: 0.1.9 --fix:--> 0.1.10', () => {
@@ -138,9 +144,9 @@ describe('bump.mjs main (integration)', () => {
     writePkg(dir, '0.1.9');
     execSync('git add package.json', { cwd: dir });
     execSync('git commit -q -m bump', { cwd: dir });
-    const msg = writeMsg(dir, 'fix: carry');
-    runBump(dir, msg, 'message');
-    expect(readPkgVersion(dir)).toBe('0.1.10');
+    installHook(dir);
+    commitFile(dir, 'a.txt', 'x', 'fix: carry');
+    expect(headVersion(dir)).toBe('0.1.10');
   });
 
   test('minor carry: 0.1.9 --feat:--> 0.2.0', () => {
@@ -148,55 +154,41 @@ describe('bump.mjs main (integration)', () => {
     writePkg(dir, '0.1.9');
     execSync('git add package.json', { cwd: dir });
     execSync('git commit -q -m bump', { cwd: dir });
-    const msg = writeMsg(dir, 'feat: carry');
-    runBump(dir, msg, 'message');
-    expect(readPkgVersion(dir)).toBe('0.2.0');
-  });
-
-  test("source='commit' (amend) → no bump", () => {
-    const dir = newRepo();
-    const msg = writeMsg(dir, 'fix: should not bump');
-    runBump(dir, msg, 'commit');
-    expect(readPkgVersion(dir)).toBe('0.1.0');
-    expect(stagedFiles(dir)).toBe('');
-  });
-
-  test("source='merge' → no bump", () => {
-    const dir = newRepo();
-    const msg = writeMsg(dir, 'fix: merge msg');
-    runBump(dir, msg, 'merge');
-    expect(readPkgVersion(dir)).toBe('0.1.0');
-  });
-
-  test("source='squash' → no bump", () => {
-    const dir = newRepo();
-    const msg = writeMsg(dir, 'fix: squash');
-    runBump(dir, msg, 'squash');
-    expect(readPkgVersion(dir)).toBe('0.1.0');
+    installHook(dir);
+    commitFile(dir, 'a.txt', 'x', 'feat: carry');
+    expect(headVersion(dir)).toBe('0.2.0');
   });
 
   test('CCS_NO_BUMP=1 → no bump', () => {
     const dir = newRepo();
-    const msg = writeMsg(dir, 'fix: nope');
-    runBump(dir, msg, 'message', { CCS_NO_BUMP: '1' });
-    expect(readPkgVersion(dir)).toBe('0.1.0');
-  });
-
-  test('CHERRY_PICK_HEAD present → no bump', () => {
-    const dir = newRepo();
-    writeFileSync(join(dir, '.git', 'CHERRY_PICK_HEAD'), 'deadbeef\n');
-    const msg = writeMsg(dir, 'fix: cherry');
-    runBump(dir, msg, 'message');
-    expect(readPkgVersion(dir)).toBe('0.1.0');
+    installHook(dir);
+    commitFile(dir, 'a.txt', 'x', 'fix: nope', { CCS_NO_BUMP: '1' });
+    expect(headVersion(dir)).toBe('0.1.0');
   });
 
   test('manually staged version change → respected, no bump', () => {
     const dir = newRepo();
-    // 手动改 version 行并 stage
-    writePkg(dir, '0.5.0');
+    installHook(dir);
+    writePkg(dir, '0.5.0'); // 手动改 version
     execSync('git add package.json', { cwd: dir });
-    const msg = writeMsg(dir, 'fix: manual version');
-    runBump(dir, msg, 'message');
-    expect(readPkgVersion(dir)).toBe('0.5.0'); // 尊重手动值
+    execSync('git commit -q -m "fix: manual version"', { cwd: dir });
+    expect(headVersion(dir)).toBe('0.5.0'); // 尊重手动值，不再 bump
+  });
+
+  test('amend does not double-bump (CCS_BUMPING guard)', () => {
+    const dir = newRepo();
+    installHook(dir);
+    commitFile(dir, 'a.txt', 'x', 'fix: first'); // → 0.1.1
+    expect(headVersion(dir)).toBe('0.1.1');
+    // 手动 amend 带 CCS_BUMPING：不应再 bump
+    execSync('git commit --amend --no-edit -q', { cwd: dir, env: { ...process.env, CCS_BUMPING: '1' } });
+    expect(headVersion(dir)).toBe('0.1.1');
+  });
+
+  test('plain message (no prefix) → minor', () => {
+    const dir = newRepo();
+    installHook(dir);
+    commitFile(dir, 'a.txt', 'x', 'just a plain commit');
+    expect(headVersion(dir)).toBe('0.2.0');
   });
 });

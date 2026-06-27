@@ -1,7 +1,7 @@
-// 把 prepare-commit-msg（+ bump.mjs）安装到本地 .git/hooks/，幂等覆盖。
-// 用法：npm run hooks:install。不用 prepare 钩子，避免依赖安装时误触发。
+// 把 post-commit（+ bump.mjs）安装到本地 .git/hooks/，幂等覆盖。
+// 用法：npm run hooks:install。不用 prepare 脚本，避免依赖安装时误触发。
 
-import { existsSync, mkdirSync, copyFileSync, chmodSync } from 'node:fs';
+import { existsSync, mkdirSync, copyFileSync, chmodSync, unlinkSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,8 +24,16 @@ if (!gitDir) {
 const hooksDir = join(gitDir, 'hooks');
 mkdirSync(hooksDir, { recursive: true });
 
-// prepare-commit-msg 是 sh 入口，bump.mjs 是其调用的实际逻辑；两者需同目录。
-const files = ['prepare-commit-msg', 'bump.mjs'];
+// 旧版本曾用 prepare-commit-msg，迁移：若存在且为本工具产物则清理。
+const legacy = join(hooksDir, 'prepare-commit-msg');
+if (existsSync(legacy)) {
+  let txt = '';
+  try { txt = readFileSync(legacy, 'utf8'); } catch { /* ignore */ }
+  if (txt.includes('bump.mjs')) unlinkSync(legacy);
+}
+
+// post-commit 是 sh 入口，bump.mjs 是其调用的实际逻辑；两者需同目录。
+const files = ['post-commit', 'bump.mjs'];
 for (const f of files) {
   const dest = join(hooksDir, f);
   copyFileSync(join(here, f), dest);
