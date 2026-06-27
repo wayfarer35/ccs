@@ -18,7 +18,7 @@ npm install
 npm link        # 全局注册 ccs 命令
 ```
 
-或本地直接跑：`node src/cli.mjs ...`
+或本地直接跑：`npm run build && node dist/cli.js ...`
 
 ## 配置存放
 
