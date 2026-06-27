@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'node:fs';
+import { CONFIG_FILE } from '../src/config.js';
 
 // 所有 mock 对象用 vi.hoisted 提升，避免 vi.mock factory 引用未初始化变量
 const M = vi.hoisted(() => ({
@@ -38,8 +39,18 @@ import { providerFile, writeJSON } from '../src/config.js';
 
 const TEST_NAME = `__cli_int_${process.pid}`;
 function clean() { try { fs.rmSync(providerFile(TEST_NAME), { force: true }); } catch { /* ignore */ } }
-beforeEach(() => { clean(); vi.clearAllMocks(); });
-afterEach(clean);
+
+// cmdConfig 等会写真实 ~/.ccs/config.json，备份/恢复避免污染用户设置（本文件内串行，安全）
+let configBackup: string | null = null;
+beforeEach(() => {
+  clean(); vi.clearAllMocks();
+  configBackup = fs.existsSync(CONFIG_FILE) ? fs.readFileSync(CONFIG_FILE, 'utf8') : null;
+});
+afterEach(() => {
+  clean();
+  if (configBackup !== null) fs.writeFileSync(CONFIG_FILE, configBackup);
+  else if (fs.existsSync(CONFIG_FILE)) fs.rmSync(CONFIG_FILE, { force: true });
+});
 
 describe('cmdUse', () => {
   test('picks existing provider → launches', async () => {
@@ -157,11 +168,15 @@ describe('cmdEdit', () => {
   });
 
   test('missing name → exit', async () => {
-    await expect(cmdEdit([])).rejects.toThrow();
+    const exit = interceptExit();
+    try { await cmdEdit([]); } catch { /* exit thrown */ } finally { restoreExit(exit); }
+    expect(exit.called).toBe(true);
   });
 
   test('unknown name → exit', async () => {
-    await expect(cmdEdit([`__nope_${process.pid}`])).rejects.toThrow();
+    const exit = interceptExit();
+    try { await cmdEdit([`__nope_${process.pid}`]); } catch { /* exit thrown */ } finally { restoreExit(exit); }
+    expect(exit.called).toBe(true);
   });
 
   test('--raw opens editor', async () => {
@@ -190,33 +205,31 @@ describe('cmdRemove', () => {
   });
 
   test('missing name → exit', async () => {
-    await expect(cmdRemove([])).rejects.toThrow();
+    const exit = interceptExit();
+    try { await cmdRemove([]); } catch { /* exit thrown */ } finally { restoreExit(exit); }
+    expect(exit.called).toBe(true);
   });
 });
 
 describe('cmdConfig', () => {
-  test('no key → prints current locale', () => {
-    expect(() => cmdConfig([])).not.toThrow();
+  test('no key → prints current locale', async () => {
+    await expect(cmdConfig([])).resolves.toBeUndefined();
   });
 
-  test('unknown key → calls process.exit(1)', () => {
+  test('unknown key → calls process.exit(1)', async () => {
     const err = interceptExit();
-    try {
-      cmdConfig(['bogus']);
-    } catch (e) { expect(String(e)).toContain('exit:1'); }
+    try { await cmdConfig(['bogus']); } catch (e) { expect(String(e)).toContain('exit:1'); }
     finally { restoreExit(err); }
     expect(err.called).toBe(true);
   });
 
-  test('locale <val> sets locale', () => {
-    expect(() => cmdConfig(['locale', 'en'])).not.toThrow();
+  test('locale <val> sets locale', async () => {
+    await expect(cmdConfig(['locale', 'en'])).resolves.toBeUndefined();
   });
 
-  test('locale invalid → calls process.exit(1)', () => {
+  test('locale invalid → calls process.exit(1)', async () => {
     const err = interceptExit();
-    try {
-      cmdConfig(['locale', 'klingon']);
-    } catch (e) { expect(String(e)).toContain('exit:1'); }
+    try { await cmdConfig(['locale', 'klingon']); } catch (e) { expect(String(e)).toContain('exit:1'); }
     finally { restoreExit(err); }
     expect(err.called).toBe(true);
   });

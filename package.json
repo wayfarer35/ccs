@@ -4,18 +4,23 @@
   "description": "Claude Code Switch — 在多套供应商配置间切换并启动 Claude Code",
   "type": "module",
   "bin": {
-    "ccs": "src/cli.mjs"
+    "ccs": "dist/cli.js"
   },
   "files": [
-    "src",
+    "dist",
     "README.md"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "start": "node src/cli.mjs",
-    "test": "echo \"no tests yet\" && exit 0"
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@clack/core": "^0.4.1",

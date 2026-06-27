@@ -123,7 +123,7 @@ async function main(): Promise<void> {
       case 'remove': case 'rm': return await cmdRemove(rest);
       case 'common': return cmdCommon();
       case 'show': return cmdShow(rest);
-      case 'config': return cmdConfig(rest);
+      case 'config': return await cmdConfig(rest);
       case 'use': return await cmdUse(rest);
       default:
         if (cmd.startsWith('-')) {
@@ -387,9 +387,9 @@ function cmdShow(rest: string[]): void {
   console.log(JSON.stringify(redactSettings(settings), null, 2));
 }
 
-function cmdConfig(rest: string[]): void {
+async function cmdConfig(rest: string[]): Promise<void> {
   const [key, val] = rest;
-  if (key === 'locale') { void cmdConfigLocale(val); return; }
+  if (key === 'locale') return cmdConfigLocale(val);
   if (!key) {
     console.log(t('config.localeCurrent', { locale: detectLocale() }));
     console.log(`  ccs config locale [${LOCALES.map((l) => l.value).join(' | ')}]`);

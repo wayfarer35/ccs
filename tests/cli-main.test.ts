@@ -24,6 +24,12 @@ vi.mock('../src/tui.js', () => ({
 }));
 vi.mock('../src/launch.js', () => M.launchMock);
 vi.mock('../src/form.js', () => M.formMock);
+vi.mock('../src/i18n.js', () => ({
+  t: (k: string) => k,
+  detectLocale: () => 'en',
+  setConfig: () => ({}),
+  LOCALES: [{ value: 'en', label: 'English' }, { value: 'zh-CN', label: '简体中文' }],
+}));
 
 import { main, printHelp } from '../src/cli.js';
 
@@ -64,6 +70,7 @@ describe('main argv dispatch', () => {
   test('presets → cmdPresets', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     await runMain(['presets']);
+    // cmdPresets 调 t('presets.header') 等，mock 下返回 key；验证至少触发了输出
     expect(log).toHaveBeenCalled();
     log.mockRestore();
   });
