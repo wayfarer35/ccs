@@ -40,6 +40,10 @@ ccs 是 Node.js ESM + TypeScript 项目，源码 `.ts` 经 `tsc` 编译到 `dist
 
 `@clack/prompts` 的 `Option<Value>` 是分布式条件类型，对联合 `Value`（如判别联合）会展开成 `Option<A> | Option<B>`，导致 `Option<UsePick>[]` 赋值失败。`tui.ts` 自定义 `SelectOption<T>` 接口规避，`ui.select<T>` 内部 `as` 转回 clack 类型。
 
+### 模板字面量内嵌 shell 脚本：转义 `${...}`
+
+`completion.ts` 的 `bashCompletionScript` / `zshCompletionScript` 用 JS 模板字面量产出 shell 脚本。shell 自身的 `${COMP_WORDS[...]}` / `${words[@]:1}` 必须写成 `\${...}`，否则被 JS 当成插值求值成空串，脚本静默失效。**凡是在模板字面量里写 bash/zsh，所有 `${...}` 一律转义**；脚本里的 `$(...)` 命令替换不受影响（JS 不展开 `$(...)`）。
+
 ---
 
 ## Validation

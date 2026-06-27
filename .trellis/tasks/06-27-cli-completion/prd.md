@@ -20,14 +20,14 @@
 
 ## Acceptance Criteria
 
-- [ ] `ccs completion bash` 输出可被 `eval` 的 bash 补全脚本；`ccs completion zsh` 输出 zsh 脚本；`ccs completion` 无参数或 `ccs completion fish` 给出友好提示（fish 非 MVP）。
-- [ ] bash `eval` 后：`ccs <Tab>` 列子命令+provider；`ccs show <Tab>` 仅 provider；`ccs create <Tab>` 仅 preset key；`ccs config locale <Tab>` 列 `en zh-CN`。
-- [ ] zsh 下等价生效（`compdef _ccs ccs`）。
-- [ ] `ccs __complete show ''` 输出 provider 名；`ccs __complete ''` 输出子命令+provider+flags。
-- [ ] 新增模块单测覆盖候选生成逻辑，覆盖率 ≥80%。
-- [ ] 模拟全局安装（`npm_config_global=true`）运行 postinstall：`~/.bashrc` 与 `~/.zshrc` 各追加一条带标记的 `eval` 行；再次运行不重复追加（幂等）。
-- [ ] 模拟非全局安装（`npm_config_global` 未设）：postinstall 不修改任何 rc 文件。
-- [ ] `ccs --help` 文本与 README 补一节说明（含自动安装机制与手动 `eval` 备选）。
+- [x] `ccs completion bash` 输出可被 `eval` 的 bash 补全脚本；`ccs completion zsh` 输出 zsh 脚本；`ccs completion` 无参数或 `ccs completion fish` 给出友好提示（fish 非 MVP）。
+- [x] bash `eval` 后：`ccs <Tab>` 列子命令+provider；`ccs show <Tab>` 仅 provider；`ccs create <Tab>` 仅 preset key；`ccs config locale <Tab>` 列 `en zh-CN`。
+- [x] zsh 下等价生效（`compdef _ccs ccs`）。
+- [x] `ccs __complete show ''` 输出 provider 名；`ccs __complete ''` 输出子命令+provider+flags。
+- [x] 新增模块单测覆盖候选生成逻辑，覆盖率 ≥80%。
+- [x] 模拟全局安装（`npm_config_global=true`）运行 postinstall：`~/.bashrc` 与 `~/.zshrc` 各追加一条带标记的 `eval` 行；再次运行不重复追加（幂等）。
+- [x] 模拟非全局安装（`npm_config_global` 未设）：postinstall 不修改任何 rc 文件。
+- [x] `ccs --help` 文本与 README 补一节说明（含自动安装机制与手动 `eval` 备选）。
 
 ## Notes
 
