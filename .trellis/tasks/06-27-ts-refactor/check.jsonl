@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "check 阶段验证 form 状态机跨层一致性：FormState mode 分支 exhaustive、buildResult 输出与 launch buildProviderSettings 消费方契约一致"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "check 阶段验证类型契约：可选字段未误设、Record 访问有 undefined 兜底、无 any 逃逸"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "check 阶段验证迁移未引入重复类型定义/解析逻辑，类型集中在 types.ts"}

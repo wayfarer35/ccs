@@ -1,0 +1,84 @@
+{
+  "ark-coding-plan": {
+    "label": "Ark 火山引擎 Coding Plan",
+    "baseUrl": "https://ark.cn-beijing.volces.com/api/coding",
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 200000
+    }
+  },
+  "ark-agent-plan": {
+    "label": "Ark 火山引擎 Agent Plan",
+    "baseUrl": "https://ark.cn-beijing.volces.com/api/plan",
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 200000
+    }
+  },
+  "bigmodel-coding-plan": {
+    "label": "Bigmodel 智谱 Coding Plan",
+    "baseUrl": "https://open.bigmodel.cn/api/anthropic",
+    "model": "glm-4.7",
+    "models": {
+      "haiku": "glm-4.7",
+      "sonnet": "glm-5.2[1m]",
+      "opus": "glm-5.2[1m]",
+      "fable": "glm-5.2[1m]"
+    },
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 200000
+    }
+  },
+  "deepseek-api": {
+    "label": "DeepSeek 深度求索 Api",
+    "baseUrl": "https://api.deepseek.com/anthropic",
+    "model": "deepseek-v4-flash",
+    "models": {
+      "haiku": "deepseek-v4-flash",
+      "sonnet": "deepseek-v4-pro[1m]",
+      "opus": "deepseek-v4-pro[1m]",
+      "fable": "deepseek-v4-pro[1m]"
+    },
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 200000
+    }
+  },
+  "mimo-api": {
+    "label": "MiMo 小米 Api",
+    "baseUrl": "https://api.xiaomimimo.com/anthropic",
+    "model": "mimo-v2.5-flash",
+    "models": {
+      "haiku": "mimo-v2.5-flash",
+      "sonnet": "mimo-v2.5-pro[1m]",
+      "opus": "mimo-v2.5-pro[1m]",
+      "fable": "mimo-v2.5-pro[1m]"
+    },
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 200000
+    }
+  },
+  "mimo-token-plan": {
+    "label": "MiMo 小米 Token Plan",
+    "baseUrl": "https://token-plan-cn.xiaomimimo.com/anthropic",
+    "model": "mimo-v2.5-flash",
+    "models": {
+      "haiku": "mimo-v2.5-flash",
+      "sonnet": "mimo-v2.5-pro[1m]",
+      "opus": "mimo-v2.5-pro[1m]",
+      "fable": "mimo-v2.5-pro[1m]"
+    },
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 200000
+    }
+  }
+}

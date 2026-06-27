@@ -1,0 +1,27 @@
+{
+  "version": "1",
+  "language": "javascript",
+  "target": "claude",
+  "profile": "default",
+  "detected": {
+    "frameworks": [],
+    "packageManager": "npm",
+    "scripts": {
+      "start": "node src/cli.mjs",
+      "test": "echo \"no tests yet\" && exit 0"
+    },
+    "dependencies": ["@clack/prompts"]
+  },
+  "installedRules": [
+    "patterns.md",
+    "security.md",
+    "hooks.md",
+    "testing.md",
+    "code-review.md",
+    "performance.md",
+    "development-workflow.md",
+    "git-workflow.md",
+    "coding-style.md",
+    "agents.md"
+  ]
+}
