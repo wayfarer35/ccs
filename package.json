@@ -1,6 +1,6 @@
 {
   "name": "ccs",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Claude Code Switch — 在多套供应商配置间切换并启动 Claude Code",
   "type": "module",
   "bin": {
