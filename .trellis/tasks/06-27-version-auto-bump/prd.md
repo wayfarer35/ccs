@@ -26,15 +26,15 @@
 
 ## Acceptance Criteria
 
-- [ ] `ccs --version` 输出 == `node -p "require('./package.json').version"`，始终一致。
-- [ ] `tests/cli-main.test.ts` 不再硬编码 `'0.1.0'`，改为从 `package.json` 读取期望值。
-- [ ] `fix: xxx` 提交后 patch +1（如 `0.1.0 → 0.1.1`）；`feat: xxx` 提交后 minor +1（`0.1.0 → 0.2.0`），patch 归零。
-- [ ] `patch` 进位正确：`0.1.9 --fix:--> 0.1.10`；`minor` 进位正确：`0.1.9 --feat:--> 0.2.0`。
-- [ ] `git commit --amend`、merge commit、squash、`CCS_NO_BUMP=1 git commit` 均**不**再 bump。
-- [ ] 手动改 version 行后提交，hook 不重复 bump。
-- [ ] `npm run hooks:install` 后 `.git/hooks/prepare-commit-msg` 存在且可执行。
-- [ ] `npm test` 全绿；`version.ts` 与 `bumpVersion`/`parseBumpKind` 纯函数覆盖率 ≥80%。
-- [ ] README 增补「版本自增」节说明规则与跳过方式。
+- [x] `ccs --version` 输出 == `node -p "require('./package.json').version"`，始终一致。
+- [x] `tests/cli-main.test.ts` 不再硬编码 `'0.1.0'`，改为从 `package.json` 读取期望值。
+- [x] `fix: xxx` 提交后 patch +1（如 `0.1.0 → 0.1.1`）；`feat: xxx` 提交后 minor +1（`0.1.0 → 0.2.0`），patch 归零。
+- [x] `patch` 进位正确：`0.1.9 --fix:--> 0.1.10`；`minor` 进位正确：`0.1.9 --feat:--> 0.2.0`。
+- [x] `git commit --amend`、merge commit、squash、`CCS_NO_BUMP=1 git commit` 均**不**再 bump。
+- [x] 手动改 version 行后提交，hook 不重复 bump。
+- [x] `npm run hooks:install` 后 `.git/hooks/prepare-commit-msg` 存在且可执行。
+- [x] `npm test` 全绿；`version.ts` 与 `bumpVersion`/`parseBumpKind` 纯函数覆盖率 ≥80%。
+- [x] README 增补「版本自增」节说明规则与跳过方式。
 
 ## Notes
 
