@@ -2,83 +2,313 @@
   "ark-coding-plan": {
     "label": "Ark 火山引擎 Coding Plan",
     "baseUrl": "https://ark.cn-beijing.volces.com/api/coding",
+    "model": {
+      "support": [
+        "ark-code-latest",
+        "doubao-seed-2.0-code",
+        "doubao-seed-2.0-pro",
+        "doubao-seed-2.0-lite",
+        "doubao-seed-code",
+        "minimax-m2.7",
+        "minimax-m3",
+        "glm-5.2",
+        "deepseek-v4-flash",
+        "deepseek-v4-pro",
+        "kimi-k2.6",
+        "kimi-k2.7"
+      ],
+      "default": "ark-code-latest",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "minimax-m3",
+        "sonnet": "deepseek-v4-pro[1m]",
+        "opus": "glm-5.2[1m]",
+        "fable": ""
+      }
+    },
     "options": {
       "attributionHeader": false,
       "disableNonEssentialTraffic": true,
-      "autoCompactWindow": 200000
+      "autoCompactWindow": 1000000
     }
   },
   "ark-agent-plan": {
     "label": "Ark 火山引擎 Agent Plan",
     "baseUrl": "https://ark.cn-beijing.volces.com/api/plan",
+    "model": {
+      "support": [
+        "ark-code-latest",
+        "doubao-seed-2.0-code",
+        "doubao-seed-2.0-pro",
+        "doubao-seed-2.0-lite",
+        "doubao-seed-2.0-mini",
+        "doubao-seed-code",
+        "doubao-seed-2.0-pro",
+        "minimax-m2.7",
+        "minimax-m3",
+        "glm-5.2",
+        "deepseek-v4-flash",
+        "deepseek-v4-pro",
+        "kimi-k2.6",
+        "kimi-k2.7"
+      ],
+      "default": "ark-code-latest",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "minimax-m3",
+        "sonnet": "deepseek-v4-pro[1m]",
+        "opus": "glm-5.2[1m]",
+        "fable": ""
+      }
+    },
     "options": {
       "attributionHeader": false,
       "disableNonEssentialTraffic": true,
-      "autoCompactWindow": 200000
+      "autoCompactWindow": 1000000
     }
   },
   "bigmodel-coding-plan": {
     "label": "Bigmodel 智谱 Coding Plan",
     "baseUrl": "https://open.bigmodel.cn/api/anthropic",
-    "model": "glm-4.7",
-    "models": {
-      "haiku": "glm-4.7",
-      "sonnet": "glm-5.2[1m]",
-      "opus": "glm-5.2[1m]",
-      "fable": "glm-5.2[1m]"
+    "model": {
+      "default": "glm-5.2[1m]",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "glm-4.7",
+        "sonnet": "glm-5.2[1m]",
+        "opus": "glm-5.2[1m]",
+        "fable": ""
+      }
     },
     "options": {
       "attributionHeader": false,
       "disableNonEssentialTraffic": true,
-      "autoCompactWindow": 200000
+      "autoCompactWindow": 1000000
+    }
+  },
+  "bailian-coding-plan": {
+    "label": "Bailian 阿里百炼 Coding Plan",
+    "baseUrl": "https://coding.dashscope.aliyuncs.com/apps/anthropic",
+    "model": {
+      "support": [
+        "qwen3.7-plus",
+        "qwen3.6-plus",
+        "kimi-k2.5",
+        "glm-5",
+        "MiniMax-M2.5",
+        "qwen3.5-plus",
+        "qwen3-max-2026-01-23",
+        "qwen3-coder-next",
+        "qwen3-coder-plus",
+        "glm-4.7"
+      ],
+      "default": "qwen3.6-plus",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "MiniMax-M2.5",
+        "sonnet": "qwen3.6-plus",
+        "opus": "qwen3.7-plus",
+        "fable": ""
+      }
+    },
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 1000000
+    }
+  },
+  "bailian-token-plan": {
+    "label": "Bailian 阿里百炼 Token Plan",
+    "baseUrl": "https://token-plan.cn-beijing.maas.aliyuncs.com/apps/anthropic",
+    "model": {
+      "support": [
+        "qwen3.7-max",
+        "qwen3.7-plus",
+        "qwen3.6-plus",
+        "qwen3.6-flash",
+        "deepseek-v4-pro",
+        "deepseek-v4-flash",
+        "deepseek-v3.2",
+        "kimi-k2.7-code",
+        "kimi-k2.6",
+        "kimi-k2.5",
+        "glm-5.2",
+        "glm-5.1",
+        "glm-5",
+        "MiniMax-M2.5"
+      ],
+      "default": "qwen3.7-max",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "qwen3.6-flash",
+        "sonnet": "qwen3.7-max",
+        "opus": "qwen3.7-max",
+        "fable": ""
+      }
+    },
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 1000000
     }
   },
   "deepseek-api": {
     "label": "DeepSeek 深度求索 Api",
     "baseUrl": "https://api.deepseek.com/anthropic",
-    "model": "deepseek-v4-flash",
-    "models": {
-      "haiku": "deepseek-v4-flash",
-      "sonnet": "deepseek-v4-pro[1m]",
-      "opus": "deepseek-v4-pro[1m]",
-      "fable": "deepseek-v4-pro[1m]"
+    "model": {
+      "default": "deepseek-v4-flash",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "deepseek-v4-flash",
+        "sonnet": "deepseek-v4-pro[1m]",
+        "opus": "deepseek-v4-pro[1m]",
+        "fable": ""
+      }
     },
     "options": {
       "attributionHeader": false,
       "disableNonEssentialTraffic": true,
-      "autoCompactWindow": 200000
+      "autoCompactWindow": 1000000
     }
   },
   "mimo-api": {
     "label": "MiMo 小米 Api",
     "baseUrl": "https://api.xiaomimimo.com/anthropic",
-    "model": "mimo-v2.5-flash",
-    "models": {
-      "haiku": "mimo-v2.5-flash",
-      "sonnet": "mimo-v2.5-pro[1m]",
-      "opus": "mimo-v2.5-pro[1m]",
-      "fable": "mimo-v2.5-pro[1m]"
+    "model": {
+      "default": "mimo-v2.5-flash",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "mimo-v2.5-flash",
+        "sonnet": "mimo-v2.5-pro[1m]",
+        "opus": "mimo-v2.5-pro[1m]",
+        "fable": ""
+      }
     },
     "options": {
       "attributionHeader": false,
       "disableNonEssentialTraffic": true,
-      "autoCompactWindow": 200000
+      "autoCompactWindow": 1000000
     }
   },
   "mimo-token-plan": {
     "label": "MiMo 小米 Token Plan",
     "baseUrl": "https://token-plan-cn.xiaomimimo.com/anthropic",
-    "model": "mimo-v2.5-flash",
-    "models": {
-      "haiku": "mimo-v2.5-flash",
-      "sonnet": "mimo-v2.5-pro[1m]",
-      "opus": "mimo-v2.5-pro[1m]",
-      "fable": "mimo-v2.5-pro[1m]"
+    "model": {
+      "default": "mimo-v2.5-flash",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "mimo-v2.5-flash",
+        "sonnet": "mimo-v2.5-pro[1m]",
+        "opus": "mimo-v2.5-pro[1m]",
+        "fable": ""
+      }
     },
     "options": {
       "attributionHeader": false,
       "disableNonEssentialTraffic": true,
-      "autoCompactWindow": 200000
+      "autoCompactWindow": 1000000
+    }
+  },
+  "qianfan-coding-plan": {
+    "label": "Qianfan 百度千帆 Coding Plan",
+    "baseUrl": "https://qianfan.baidubce.com/anthropic/coding",
+    "model": {
+      "support": [
+        "deepseek-v3.2",
+        "deepseek-v4-flash",
+        "deepseek-v4-pro",
+        "ernie-4.5-turbo-20260402",
+        "glm-5",
+        "glm-5.1",
+        "kimi-k2.5"
+      ],
+      "default": "deepseek-v4-flash",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "deepseek-v4-flash",
+        "sonnet": "glm-5.1",
+        "opus": "deepseek-v4-pro[1m]",
+        "fable": ""
+      }
+    },
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 1000000
+    }
+  },
+  "spark-coding-plan": {
+    "label": "Spark 讯飞星辰 Coding Plan",
+    "baseUrl": "https://maas-coding-api.cn-huabei-1.xf-yun.com/anthropic",
+    "model": {
+      "support": [
+        "astron-code-latest",
+        "xsparkx2",
+        "xsparkx2flash",
+        "xopglm51",
+        "xopglm5",
+        "xopdeepseekv4pro",
+        "xopdeepseekv4flash",
+        "xopdeepseekv32",
+        "xopkimik26",
+        "xopkimik25",
+        "xminimaxm25",
+        "xopqwen35397b",
+        "xopqwen36v35b",
+        "xopqwen35v35b",
+        "xop3qwencodernext",
+        "xopglmv47flash"
+      ],
+      "default": "astron-code-latest",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "astron-code-latest",
+        "sonnet": "xopglm51",
+        "opus": "xopdeepseekv4pro[1m]",
+        "fable": ""
+      }
+    },
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 1000000
+    }
+  },
+  "spark-token-plan": {
+    "label": "Spark 讯飞星辰 Token Plan",
+    "baseUrl": "https://maas-token-api.cn-huabei-1.xf-yun.com/anthropic",
+    "model": {
+      "support": [
+        "astron-code-latest",
+        "xsparkx2",
+        "xsparkx2flash",
+        "xopglm51",
+        "xopglm5",
+        "xopdeepseekv4pro",
+        "xopdeepseekv4flash",
+        "xopdeepseekv32",
+        "xopkimik26",
+        "xopkimik25",
+        "xminimaxm25",
+        "xopqwen35397b",
+        "xopqwen36v35b",
+        "xopqwen35v35b",
+        "xop3qwencodernext",
+        "xopglmv47flash"
+      ],
+      "default": "astron-code-latest",
+      "tier": "opus",
+      "tiers": {
+        "haiku": "astron-code-latest",
+        "sonnet": "xopglm51",
+        "opus": "xopdeepseekv4pro[1m]",
+        "fable": ""
+      }
+    },
+    "options": {
+      "attributionHeader": false,
+      "disableNonEssentialTraffic": true,
+      "autoCompactWindow": 1000000
     }
   }
 }

@@ -68,8 +68,10 @@ describe('parseEffortEnv', () => {
 const FULL_PRESET: Preset = {
   label: 'Test',
   baseUrl: 'https://api.test.com',
-  model: 'test-model',
-  models: { opus: 'opus-m', sonnet: 'sonnet-m', haiku: 'haiku-m', fable: 'fable-m' },
+  model: {
+    default: 'test-model',
+    tiers: { opus: 'opus-m', sonnet: 'sonnet-m', haiku: 'haiku-m', fable: 'fable-m' },
+  },
   options: { attributionHeader: false, disableNonEssentialTraffic: true, autoCompactWindow: 100000, effort: 'high' },
 };
 
@@ -112,6 +114,41 @@ describe('initState', () => {
     const s = initState({}, FULL_PRESET);
     expect(s.aliases.OPUS).toBe('opus-m');
     expect(s.aliases.FABLE).toBe('fable-m');
+  });
+
+  test('new model structure: default/tier/tiers read correctly', () => {
+    const s = initState({}, FULL_PRESET);
+    expect(s.singleModel).toBe('test-model');
+    expect(s.tier).toBe('opus');
+  });
+
+  test('authMethod defaults to auth_token on create', () => {
+    const s = initState({}, FULL_PRESET);
+    expect(s.authMethod).toBe('auth_token');
+  });
+
+  test('authMethod detects api_key when ANTHROPIC_API_KEY exists', () => {
+    const s = initState({ env: { ANTHROPIC_API_KEY: 'sk-xxx' } }, null);
+    expect(s.authMethod).toBe('api_key');
+  });
+
+  test('authMethod defaults to auth_token when only ANTHROPIC_AUTH_TOKEN exists', () => {
+    const s = initState({ env: { ANTHROPIC_AUTH_TOKEN: 'Bearer xxx' } }, null);
+    expect(s.authMethod).toBe('auth_token');
+  });
+
+  test('customParams initializes to empty string', () => {
+    const s = initState({}, FULL_PRESET);
+    expect(s.customParams).toBe('');
+  });
+
+  test('preset without model field → defaults', () => {
+    const bare: Preset = { label: 'b', baseUrl: 'https://b' };
+    const s = initState({}, bare);
+    expect(s.singleModel).toBe('');
+    expect(s.tier).toBe('opus');
+    expect(s.mode).toBe('alias');
+    expect(s.authMethod).toBe('auth_token');
   });
 });
 
@@ -185,6 +222,65 @@ describe('buildResult', () => {
     buildResult(s);
     expect(JSON.stringify(s)).toBe(snapshot);
   });
+
+  test('authMethod=auth_token writes ANTHROPIC_AUTH_TOKEN', () => {
+    const s = initState({}, null);
+    s.baseUrl = 'https://x';
+    s.authMethod = 'auth_token';
+    s.apiKey = 'tok123';
+    const r = buildResult(s);
+    expect(r.env.ANTHROPIC_AUTH_TOKEN).toBe('tok123');
+    expect(r.env.ANTHROPIC_API_KEY).toBe('');
+  });
+
+  test('authMethod=api_key writes ANTHROPIC_API_KEY', () => {
+    const s = initState({}, null);
+    s.baseUrl = 'https://x';
+    s.authMethod = 'api_key';
+    s.apiKey = 'sk456';
+    const r = buildResult(s);
+    expect(r.env.ANTHROPIC_API_KEY).toBe('sk456');
+    expect(r.env.ANTHROPIC_AUTH_TOKEN).toBe('');
+  });
+
+  test('customParams merges JSON into env', () => {
+    const s = initState({}, null);
+    s.baseUrl = 'https://x';
+    s.customParams = '{"allowed_openai_params": "{\\"max_tokens\\": 8192}", "litellm_settings": "{}"}';
+    const r = buildResult(s);
+    expect(r.env.allowed_openai_params).toBe('{"max_tokens": 8192}');
+    expect(r.env.litellm_settings).toBe('{}');
+  });
+
+  test('customParams with null/undefined values skipped', () => {
+    const s = initState({}, null);
+    s.baseUrl = 'https://x';
+    s.customParams = '{"a": "1", "b": null, "c": "str"}';
+    const r = buildResult(s);
+    expect(r.env.a).toBe('1');
+    expect(r.env.b).toBeUndefined();
+    expect(r.env.c).toBe('str');
+  });
+
+  test('dual-key placeholder: non-selected auth key is written as empty string', () => {
+    // auth_token mode → ANTHROPIC_API_KEY=''
+    const s1 = initState({}, null);
+    s1.baseUrl = 'https://x';
+    s1.authMethod = 'auth_token';
+    s1.apiKey = 'tok123';
+    const r1 = buildResult(s1);
+    expect(r1.env.ANTHROPIC_AUTH_TOKEN).toBe('tok123');
+    expect(r1.env.ANTHROPIC_API_KEY).toBe('');
+
+    // api_key mode → ANTHROPIC_AUTH_TOKEN=''
+    const s2 = initState({}, null);
+    s2.baseUrl = 'https://x';
+    s2.authMethod = 'api_key';
+    s2.apiKey = 'sk456';
+    const r2 = buildResult(s2);
+    expect(r2.env.ANTHROPIC_API_KEY).toBe('sk456');
+    expect(r2.env.ANTHROPIC_AUTH_TOKEN).toBe('');
+  });
 });
 
 describe('validateState', () => {
@@ -207,6 +303,27 @@ describe('validateState', () => {
   test('passes with valid single state', () => {
     const s = initState({ env: { ANTHROPIC_MODEL: 'm' } }, null);
     s.baseUrl = 'https://x';
+    expect(validateState(s)).toBeNull();
+  });
+
+  test('invalid customParams JSON → error', () => {
+    const s = initState({}, null);
+    s.baseUrl = 'https://x';
+    s.customParams = '{invalid json}';
+    expect(validateState(s)).not.toBeNull();
+  });
+
+  test('valid customParams JSON → no error', () => {
+    const s = initState({}, null);
+    s.baseUrl = 'https://x';
+    s.customParams = '{"key": "value"}';
+    expect(validateState(s)).toBeNull();
+  });
+
+  test('empty customParams → no error', () => {
+    const s = initState({}, null);
+    s.baseUrl = 'https://x';
+    s.customParams = '';
     expect(validateState(s)).toBeNull();
   });
 });

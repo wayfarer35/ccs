@@ -6,6 +6,7 @@ const M = vi.hoisted(() => ({
     intro: vi.fn(), outro: vi.fn(), cancel: vi.fn(), note: vi.fn(),
     log: { message: vi.fn(), info: vi.fn(), step: vi.fn(), warning: vi.fn(), error: vi.fn() },
     select: vi.fn(), confirm: vi.fn(), text: vi.fn(), password: vi.fn(),
+    inkSelect: vi.fn(), inkText: vi.fn(), inkConfirm: vi.fn(), picker: vi.fn(),
   },
   runProviderForm: vi.fn(async () => ({ env: {} })),
   presets: {
@@ -28,18 +29,18 @@ beforeEach(() => vi.clearAllMocks());
 
 describe('chooseCreateMode', () => {
   test('returns selected mode', async () => {
-    M.uiMock.select.mockResolvedValueOnce('builtin');
+    M.uiMock.inkSelect.mockResolvedValueOnce('builtin');
     await expect(chooseCreateMode()).resolves.toBe('builtin');
   });
   test('returns custom when selected', async () => {
-    M.uiMock.select.mockResolvedValueOnce('custom');
+    M.uiMock.inkSelect.mockResolvedValueOnce('custom');
     await expect(chooseCreateMode()).resolves.toBe('custom');
   });
 });
 
 describe('pickBuiltinPreset', () => {
   test('returns { key, preset } from selection', async () => {
-    M.uiMock.select.mockResolvedValueOnce('glm');
+    M.uiMock.inkSelect.mockResolvedValueOnce('glm');
     const r = await pickBuiltinPreset();
     expect(r.key).toBe('glm');
     expect(r.preset.label).toBe('GLM');
@@ -48,13 +49,13 @@ describe('pickBuiltinPreset', () => {
 
 describe('pickPreset', () => {
   test('builtin mode → delegates to pickBuiltinPreset', async () => {
-    M.uiMock.select.mockResolvedValueOnce('builtin').mockResolvedValueOnce('glm');
+    M.uiMock.inkSelect.mockResolvedValueOnce('builtin').mockResolvedValueOnce('glm');
     const r = await pickPreset();
     expect(r.key).toBe('glm');
     expect(r.preset).toBeTruthy();
   });
   test('custom mode → returns CUSTOM_KEY with null preset', async () => {
-    M.uiMock.select.mockResolvedValueOnce('custom');
+    M.uiMock.inkSelect.mockResolvedValueOnce('custom');
     const r = await pickPreset();
     expect(r.key).toBe('__custom__');
     expect(r.preset).toBeNull();

@@ -1,13 +1,13 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'node:fs';
 
-// mock child_process.spawnSync 以测试 launch/launchDefault 的分支（不真起 claude）
+// mock child_process.spawnSync 以测试 launch/launchDirect 的分支（不真起 claude）
 vi.mock('node:child_process', () => ({
   spawnSync: vi.fn(() => ({ status: 0, pid: 1, stdout: Buffer.alloc(0), stderr: Buffer.alloc(0), signal: null })),
   default: { spawnSync: vi.fn(() => ({ status: 0 })) },
 }));
 
-import { launch, launchDefault } from '../src/launch.js';
+import { launch, launchDirect } from '../src/launch.js';
 import { writeJSON, providerFile, ensureDirs } from '../src/config.js';
 import { spawnSync } from 'node:child_process';
 
@@ -66,9 +66,9 @@ describe('launch', () => {
   });
 });
 
-describe('launchDefault', () => {
+describe('launchDirect', () => {
   test('calls claude directly without --settings', () => {
-    launchDefault(['--print', 'x']);
+    launchDirect(['--print', 'x']);
     const [bin, args] = (spawnSync as unknown as ReturnType<typeof vi.fn>).mock.calls[0]!;
     expect(bin).toBe('claude');
     expect(args).toEqual(['--print', 'x']);
@@ -79,6 +79,6 @@ describe('launchDefault', () => {
     const err = new Error('nf') as Error & { code: string };
     err.code = 'ENOENT';
     (spawnSync as unknown as ReturnType<typeof vi.fn>).mockImplementationOnce(() => { throw err; });
-    expect(() => launchDefault([])).toThrow(/claude/);
+    expect(() => launchDirect([])).toThrow(/claude/);
   });
 });

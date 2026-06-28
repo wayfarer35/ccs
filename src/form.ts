@@ -2,7 +2,7 @@ import { ui } from './tui.js';
 import { getPresets, CUSTOM_KEY } from './presets.js';
 import { t } from './i18n.js';
 import { runProviderForm } from './formUi.js';
-import type { EffortLevel, FormMode, FormState, Preset, ProviderOptions, ProviderSettings, Tier } from './types.js';
+import type { EffortLevel, FormMode, FormState, Preset, ProviderOptions, ProviderSettings, Tier, AuthMethod } from './types.js';
 
 export const TIERS: Array<{ value: Tier; label: string }> = [
   { value: 'opus', label: 'opus' },
@@ -79,13 +79,12 @@ interface InitInput {
   env?: Record<string, string>;
   model?: string;
 }
-
 /**
  * 第一步：选内置供应商还是自定义。
  * @returns {'builtin' | 'custom'}
  */
 export async function chooseCreateMode(): Promise<'builtin' | 'custom'> {
-  return ui.select<'builtin' | 'custom'>({
+  return ui.inkSelect<'builtin' | 'custom'>({
     message: t('create.kindPrompt'),
     options: [
       { value: MODE_BUILTIN, label: t('create.kindBuiltin') },
@@ -105,7 +104,7 @@ export async function pickBuiltinPreset(): Promise<{ key: string; preset: Preset
     label: p.label,
     hint: p.baseUrl || t('presets.fillUrl'),
   }));
-  const key = await ui.select<string>({
+  const key = await ui.inkSelect<string>({
     message: t('create.builtinPrompt'),
     options,
     initialValue: Object.keys(presets)[0]!,
@@ -138,6 +137,7 @@ function detectAliasMode(initial: InitInput, preset: Preset | null): boolean {
 /**
  * 从 initial（编辑时已有 settings）与 preset（创建时预填）初始化表单状态。
  * 三项 options 的取值优先级：existing env > preset.options > DEFAULT_OPTIONS。
+ * 档位别名从 preset.model.tiers 读取（取代旧的 preset.models）。
  */
 export function initState(initial: InitInput, preset: Preset | null): FormState {
   const env = initial.env || {};
@@ -152,13 +152,23 @@ export function initState(initial: InitInput, preset: Preset | null): FormState 
   };
 
   const aliases: Record<string, string> = {};
+  const presetTiers = preset?.model?.tiers || {};
   for (const tierUpper of ALIAS_TIERS) {
     const k = aliasKey(tierUpper);
-    const tierLower = tierUpper.toLowerCase();
-    aliases[tierUpper] = env[k] ?? preset?.models?.[tierLower as Tier] ?? '';
+    const tierLower = tierUpper.toLowerCase() as Tier;
+    aliases[tierUpper] = env[k] ?? presetTiers[tierLower] ?? '';
   }
 
   const mode: FormMode = detectAliasMode(initial, preset) ? 'alias' : 'single';
+
+  // 认证方式：编辑时检测 ANTHROPIC_API_KEY 存在则选 'api_key'，否则 'auth_token'
+  const authMethod: AuthMethod = env.ANTHROPIC_API_KEY ? 'api_key' : 'auth_token';
+
+  // 默认档位：从 preset.model.tier 读取，否则 'opus'
+  const tier = initial.model || preset?.model?.tier || 'opus';
+
+  // 单模型：从 preset.model.default 读取
+  const singleModel = env.ANTHROPIC_MODEL ?? preset?.model?.default ?? '';
 
   return {
     baseUrl: env.ANTHROPIC_BASE_URL ?? preset?.baseUrl ?? '',
@@ -166,26 +176,35 @@ export function initState(initial: InitInput, preset: Preset | null): FormState 
     apiKey: '',
     keepExistingKey: !!existingKey,
     mode,
-    tier: initial.model || 'opus',
+    authMethod,
+    tier,
     aliases,
-    singleModel: env.ANTHROPIC_MODEL ?? preset?.model ?? '',
+    singleModel,
     options,
+    customParams: '',
   };
 }
 
 /**
  * 由表单状态构建 settings 片段 { env, model? }。
  * 三项 CLAUDE_CODE_* 始终写入 env（显式可见，每次启动生效）。
+ * authMethod 决定写入 ANTHROPIC_AUTH_TOKEN 还是 ANTHROPIC_API_KEY。
+ * customParams 解析为 JSON 后，顶层 key-value 合并到 env。
  */
 export function buildResult(state: FormState): ProviderSettings {
   const env: Record<string, string> = { ANTHROPIC_BASE_URL: state.baseUrl.trim() };
 
-  // Key：填了新值用新的；否则编辑时保留旧值。统一写 ANTHROPIC_AUTH_TOKEN。
+  // Key：根据 authMethod 写入不同的环境变量
+  // 同时把另一个 key 置为空串占位，覆盖主配置可能存在的残留值。
+  const keyEnv = state.authMethod === 'api_key' ? 'ANTHROPIC_API_KEY' : 'ANTHROPIC_AUTH_TOKEN';
+  const otherKeyEnv = state.authMethod === 'api_key' ? 'ANTHROPIC_AUTH_TOKEN' : 'ANTHROPIC_API_KEY';
   if (state.apiKey && state.apiKey.trim()) {
-    env.ANTHROPIC_AUTH_TOKEN = state.apiKey.trim();
+    env[keyEnv] = state.apiKey.trim();
   } else if (state.keepExistingKey && state.existingKey) {
-    env.ANTHROPIC_AUTH_TOKEN = state.existingKey;
+    env[keyEnv] = state.existingKey;
   }
+  // 另一个 key 始终写入空串占位（覆盖主配置残留）
+  env[otherKeyEnv] = '';
 
   if (state.mode === 'single') {
     env.ANTHROPIC_MODEL = state.singleModel.trim();
@@ -213,6 +232,22 @@ export function buildResult(state: FormState): ProviderSettings {
   env.CLAUDE_CODE_AUTO_COMPACT_WINDOW = String(state.options.autoCompactWindow);
   env.CLAUDE_CODE_EFFORT_LEVEL = state.options.effort;
 
+  // 解析 customParams JSON，将顶层 key-value 合并到 env
+  if (state.customParams && state.customParams.trim()) {
+    try {
+      const parsed = JSON.parse(state.customParams);
+      if (parsed && typeof parsed === 'object') {
+        for (const [k, v] of Object.entries(parsed)) {
+          if (v !== undefined && v !== null) {
+            env[k] = String(v);
+          }
+        }
+      }
+    } catch {
+      // 解析失败应在 validateState 阶段拦截，此处静默忽略
+    }
+  }
+
   const result: ProviderSettings = { env };
   if (state.mode === 'alias') {
     // model 仅 alias 模式记录初始档位（供 ccs 启动参数与菜单展示）。
@@ -226,6 +261,14 @@ export function validateState(state: FormState): string | null {
   if (!state.baseUrl || !state.baseUrl.trim()) return t('form.baseUrlValidate');
   if (state.mode === 'single' && (!state.singleModel || !state.singleModel.trim())) {
     return t('form.modelValidate');
+  }
+  // customParams 非空时需合法 JSON
+  if (state.customParams && state.customParams.trim()) {
+    try {
+      JSON.parse(state.customParams);
+    } catch {
+      return t('form.customParamsValidate');
+    }
   }
   return null;
 }

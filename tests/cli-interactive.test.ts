@@ -8,10 +8,11 @@ const M = vi.hoisted(() => ({
   uiMock: {
     intro: vi.fn(), outro: vi.fn(), cancel: vi.fn(), note: vi.fn(),
     log: { message: vi.fn(), info: vi.fn(), step: vi.fn(), warning: vi.fn(), error: vi.fn() },
-    select: vi.fn(), confirm: vi.fn(), text: vi.fn(), password: vi.fn(),
+    select: vi.fn(), confirm: vi.fn(), text: vi.fn(), password: vi.fn(), picker: vi.fn(),
+    inkSelect: vi.fn(), inkText: vi.fn(), inkConfirm: vi.fn(),
   },
   launchMock: {
-    launch: vi.fn(), dryRun: vi.fn(), launchDefault: vi.fn(), dryRunDefault: vi.fn(),
+    launch: vi.fn(), dryRun: vi.fn(), launchDirect: vi.fn(), dryRunDirect: vi.fn(),
     redactSettings: vi.fn((o: unknown) => o),
   },
   formMock: {
@@ -54,57 +55,58 @@ afterEach(() => {
 describe('cmdUse', () => {
   test('picks existing provider → launches', async () => {
     writeJSON(providerFile(TEST_NAME), { env: {} });
-    uiMock.select.mockResolvedValueOnce({ kind: 'provider', name: TEST_NAME });
+    uiMock.picker.mockResolvedValueOnce({ kind: 'provider', name: TEST_NAME });
     await cmdUse([]);
     expect(launchMock.launch).toHaveBeenCalledWith(TEST_NAME, []);
   });
 
-  test('picks default → launchDefault', async () => {
-    uiMock.select.mockResolvedValueOnce({ kind: 'default' });
+  test('picks direct → launchDirect', async () => {
+    uiMock.picker.mockResolvedValueOnce({ kind: 'direct' });
     await cmdUse([]);
-    expect(launchMock.launchDefault).toHaveBeenCalledWith([]);
+    expect(launchMock.launchDirect).toHaveBeenCalledWith([]);
   });
 
   test('picks create → cmdCreate then launch created name', async () => {
-    uiMock.select.mockResolvedValueOnce({ kind: 'create' });
+    uiMock.picker.mockResolvedValueOnce({ kind: 'create' });
     formMock.providerFormWithPreview.mockResolvedValueOnce({ env: {} });
     // cmdCreate 内部走 custom 分支
     formMock.chooseCreateMode.mockResolvedValueOnce('custom');
-    uiMock.text.mockResolvedValueOnce(TEST_NAME);
+    uiMock.inkText.mockResolvedValueOnce(TEST_NAME);
     await cmdUse([]);
     expect(launchMock.launch).toHaveBeenCalledWith(TEST_NAME, []);
   });
 
   test('picks edit → loops back to menu after edit', async () => {
     writeJSON(providerFile(TEST_NAME), { env: {} });
-    uiMock.select
-      .mockResolvedValueOnce({ kind: 'edit' })        // 选 edit
-      .mockResolvedValueOnce(TEST_NAME)               // pickExistingProvider
-      .mockResolvedValueOnce({ kind: 'default' });    // 回菜单选 default
+    uiMock.picker
+      .mockResolvedValueOnce({ kind: 'edit' })        // 主菜单选 edit
+      .mockResolvedValueOnce(TEST_NAME);              // pickExistingProvider
     formMock.providerFormWithPreview.mockResolvedValueOnce({ env: {} });
+    uiMock.picker.mockResolvedValueOnce({ kind: 'direct' }); // 回菜单选 direct
     await cmdUse([]);
-    expect(launchMock.launchDefault).toHaveBeenCalled();
+    expect(launchMock.launchDirect).toHaveBeenCalled();
   });
 
   test('picks remove then loops back', async () => {
     writeJSON(providerFile(TEST_NAME), { env: {} });
-    uiMock.select
-      .mockResolvedValueOnce({ kind: 'remove' })
-      .mockResolvedValueOnce(TEST_NAME)               // pickExistingProvider
-      .mockResolvedValueOnce({ kind: 'default' });
-    uiMock.confirm.mockResolvedValueOnce(true);
+    uiMock.picker
+      .mockResolvedValueOnce({ kind: 'remove' })      // 主菜单选 remove
+      .mockResolvedValueOnce(TEST_NAME);              // pickExistingProvider
+    uiMock.inkConfirm.mockResolvedValueOnce(true);
+    formMock.providerFormWithPreview.mockResolvedValueOnce({ env: {} });
+    uiMock.picker.mockResolvedValueOnce({ kind: 'direct' }); // 回菜单选 direct
     await cmdUse([]);
     expect(fs.existsSync(providerFile(TEST_NAME))).toBe(false);
-    expect(launchMock.launchDefault).toHaveBeenCalled();
+    expect(launchMock.launchDirect).toHaveBeenCalled();
   });
 
   test('remove cancelled → loops back, provider kept', async () => {
     writeJSON(providerFile(TEST_NAME), { env: {} });
-    uiMock.select
+    uiMock.picker
       .mockResolvedValueOnce({ kind: 'remove' })
-      .mockResolvedValueOnce(TEST_NAME)
-      .mockResolvedValueOnce({ kind: 'default' });
-    uiMock.confirm.mockResolvedValueOnce(false);
+      .mockResolvedValueOnce(TEST_NAME);
+    uiMock.inkConfirm.mockResolvedValueOnce(false);
+    uiMock.picker.mockResolvedValueOnce({ kind: 'direct' });
     await cmdUse([]);
     expect(fs.existsSync(providerFile(TEST_NAME))).toBe(true);
   });
@@ -112,12 +114,12 @@ describe('cmdUse', () => {
   test('cancel in edit subflow (Esc) → back to menu not exit', async () => {
     const { Cancel } = await import('../src/tui.js');
     writeJSON(providerFile(TEST_NAME), { env: {} });
-    uiMock.select
+    uiMock.picker
       .mockResolvedValueOnce({ kind: 'edit' })
-      .mockRejectedValueOnce(new Cancel())            // pickExistingProvider Esc
-      .mockResolvedValueOnce({ kind: 'default' });
+      .mockRejectedValueOnce(new Cancel());            // pickExistingProvider Esc
+    uiMock.picker.mockResolvedValueOnce({ kind: 'direct' });
     await cmdUse([]);
-    expect(launchMock.launchDefault).toHaveBeenCalled();
+    expect(launchMock.launchDirect).toHaveBeenCalled();
   });
 });
 
@@ -141,8 +143,8 @@ describe('cmdCreate', () => {
   test('builtin flow → name from text, preset prefilled', async () => {
     formMock.chooseCreateMode.mockResolvedValueOnce('builtin');
     formMock.pickBuiltinPreset.mockResolvedValueOnce({ key: 'deepseek-api', preset: { label: 'l', baseUrl: 'https://x' } });
-    uiMock.text.mockResolvedValueOnce(TEST_NAME);
-    formMock.providerFormWithPreview.mockResolvedValueOnce({ env: {} });
+    uiMock.inkText.mockResolvedValueOnce(TEST_NAME);
+    formMock.providerFormWithPreview.mockResolvedValue({ env: {} });
     const name = await cmdCreate([]);
     expect(name).toBe(TEST_NAME);
     expect(formMock.pickBuiltinPreset).toHaveBeenCalled();
@@ -150,8 +152,8 @@ describe('cmdCreate', () => {
 
   test('custom flow → name from text prompt', async () => {
     formMock.chooseCreateMode.mockResolvedValueOnce('custom');
-    uiMock.text.mockResolvedValueOnce(TEST_NAME);
-    formMock.providerFormWithPreview.mockResolvedValueOnce({ env: {} });
+    uiMock.inkText.mockResolvedValueOnce(TEST_NAME);
+    formMock.providerFormWithPreview.mockResolvedValue({ env: {} });
     const name = await cmdCreate([]);
     expect(name).toBe(TEST_NAME);
   });
@@ -162,7 +164,8 @@ describe('cmdEdit', () => {
     writeJSON(providerFile(TEST_NAME), { env: { ANTHROPIC_BASE_URL: 'https://old' } });
     formMock.providerFormWithPreview.mockResolvedValueOnce({ env: { ANTHROPIC_BASE_URL: 'https://new' } });
     await cmdEdit([TEST_NAME]);
-    const written = JSON.parse(fs.readFileSync(providerFile(TEST_NAME), 'utf8'));
+    const raw = fs.readFileSync(providerFile(TEST_NAME), 'utf8');
+    const written = JSON.parse(raw);
     expect(written.env.ANTHROPIC_BASE_URL).toBe('https://new');
   });
 
@@ -190,14 +193,14 @@ describe('cmdEdit', () => {
 describe('cmdRemove', () => {
   test('confirm yes → removes', async () => {
     writeJSON(providerFile(TEST_NAME), { env: {} });
-    uiMock.confirm.mockResolvedValueOnce(true);
+    uiMock.inkConfirm.mockResolvedValueOnce(true);
     await cmdRemove([TEST_NAME]);
     expect(fs.existsSync(providerFile(TEST_NAME))).toBe(false);
   });
 
   test('confirm no → keeps', async () => {
     writeJSON(providerFile(TEST_NAME), { env: {} });
-    uiMock.confirm.mockResolvedValueOnce(false);
+    uiMock.inkConfirm.mockResolvedValueOnce(false);
     await cmdRemove([TEST_NAME]);
     expect(fs.existsSync(providerFile(TEST_NAME))).toBe(true);
     expect(uiMock.cancel).toHaveBeenCalled();

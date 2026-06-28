@@ -7,7 +7,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      exclude: ['src/formUi.ts', 'src/types.ts'],
+      exclude: ['src/formUi.ts', 'src/picker.ts', 'src/inkPrompts.ts', 'src/types.ts'],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
   },

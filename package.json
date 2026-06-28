@@ -21,6 +21,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
+    "release": "standard-version -- --release-as patch",
+    "release-major": "standard-version -- --release-as major",
+    "release-minor": "standard-version -- --release-as minor",
     "hooks:install": "node scripts/git-hooks/install.mjs",
     "postinstall": "node scripts/postinstall.mjs"
   },
@@ -42,6 +45,7 @@
     "@types/node": "^26.0.1",
     "@types/react": "^19.2.17",
     "@vitest/coverage-v8": "^4.1.9",
+    "standard-version": "^9.5.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
   }

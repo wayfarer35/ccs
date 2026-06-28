@@ -10,8 +10,8 @@ import {
 } from './config.js';
 import { presetList } from './presets.js';
 import { providerFormWithPreview, chooseCreateMode, pickBuiltinPreset } from './form.js';
-import { launch, dryRun, launchDefault, dryRunDefault, redactSettings } from './launch.js';
-import { ui, Cancel } from './tui.js';
+import { launch, dryRun, launchDirect, dryRunDirect, redactSettings } from './launch.js';
+import { ui, Cancel, type PickerItem, type PickerOpts } from './tui.js';
 import { t, detectLocale, setConfig, LOCALES } from './i18n.js';
 import { getVersion } from './version.js';
 import { completeCandidates, completionScript, completionHelp } from './completion.js';
@@ -25,7 +25,7 @@ const helpEn = `ccs ${VERSION} — Claude Code Switch
 Switch between multiple provider configs and launch Claude Code.
 
 Usage:
-  ccs                        Pick a provider / default / create interactively, then launch
+  ccs                        Pick a provider / direct / create interactively, then launch
   ccs <name> [args...]       Launch with the named provider; args forwarded to claude
   ccs <name> --dry-run       Print provider config + command without launching
   ccs use [args...]          Pick a provider interactively and launch
@@ -64,7 +64,7 @@ const helpZh = `ccs ${VERSION} — Claude Code Switch
 在多套供应商配置间切换并启动 Claude Code。
 
 用法:
-  ccs                        交互选择 供应商 / default / create 并启动
+  ccs                        交互选择 供应商 / direct / create 并启动
   ccs <name> [args...]       用指定供应商启动；args 透传给 claude
   ccs <name> --dry-run       打印 provider 配置与命令，不启动
   ccs use [args...]          交互选择供应商并启动
@@ -158,16 +158,16 @@ function cmdLaunch(name: string, rest: string[]): void {
   launch(name, forwarded);
 }
 
-function cmdLaunchDefault(rest: string[]): void {
+function cmdLaunchDirect(rest: string[]): void {
   const dry = rest.includes('--dry-run');
   const forwarded = rest.filter((a) => a !== '--dry-run');
-  if (dry) return dryRunDefault(forwarded);
-  launchDefault(forwarded);
+  if (dry) return dryRunDirect(forwarded);
+  launchDirect(forwarded);
 }
 
 type UsePick =
   | { kind: 'provider'; name: string }
-  | { kind: 'default' }
+  | { kind: 'direct' }
   | { kind: 'create' }
   | { kind: 'edit' }
   | { kind: 'remove' };
@@ -183,52 +183,49 @@ async function pickExistingProvider(message: string): Promise<string | null> {
     return null;
   }
   const last = getLastUsed();
-  const options = names.map((n) => ({
+  const items: PickerItem<string>[] = names.map((n) => ({
     value: n,
     label: n,
     hint: n === last ? t('list.lastUsed') : '',
   }));
-  return ui.select<string>({ message, options, initialValue: options[0]!.value });
+  return ui.picker<string>({ message, items, initialValue: items[0]!.value });
 }
 
 async function cmdUse(rest: string[]): Promise<void> {
-  // 循环菜单：选供应商/default/create 会启动并返回；
+  // 循环菜单：选供应商/direct/create 会启动并返回；
   // 选 edit/remove 完成后回到菜单继续，子流程取消（Esc）也回菜单而非退出。
   for (;;) {
     const names = listProviders();
     const last = getLastUsed();
 
-    // 菜单始终包含现有供应商 + default + create；有配置时再加 edit / remove。
-    const options: Array<{ value: UsePick; label: string; hint: string }> = [];
+    // 两个版块：供应商区（可过滤/可滚动）+ 操作区（固定不过滤）。
+    const items: PickerItem<UsePick>[] = [];
+    let initial: UsePick | undefined;
     for (const n of names) {
-      options.push({
-        value: { kind: 'provider', name: n } as UsePick,
-        label: n,
-        hint: n === last ? t('list.lastUsed') : '',
-      });
+      const v: UsePick = { kind: 'provider', name: n };
+      items.push({ value: v, label: n, hint: n === last ? t('list.lastUsed') : '' });
+      if (n === last) initial = v;
     }
-    options.push(
-      { value: { kind: 'default' } as UsePick, label: t('use.default'), hint: t('use.defaultHint') },
+    const actions: PickerItem<UsePick>[] = [
+      { value: { kind: 'direct' } as UsePick, label: t('use.direct'), hint: t('use.directHint') },
       { value: { kind: 'create' } as UsePick, label: t('use.create'), hint: t('use.createHint') },
-    );
+    ];
     if (names.length) {
-      options.push(
+      actions.push(
         { value: { kind: 'edit' } as UsePick, label: t('use.edit'), hint: t('use.editHint') },
         { value: { kind: 'remove' } as UsePick, label: t('use.remove'), hint: t('use.removeHint') },
       );
     }
 
     // 默认高亮上次使用的供应商，否则第一项。
-    let initialValue: UsePick = options[0]!.value;
-    if (last) {
-      const li = options.findIndex((o) => o.value.kind === 'provider' && o.value.name === last);
-      if (li >= 0) initialValue = options[li]!.value;
-    }
+    if (!initial) initial = (items[0] ?? actions[0])?.value;
 
-    const picked = await ui.select<UsePick>({ message: t('use.select'), options, initialValue });
+    const pickerOpts: PickerOpts<UsePick> = { message: t('use.select'), items, actions };
+    if (initial) pickerOpts.initialValue = initial;
+    const picked = await ui.picker<UsePick>(pickerOpts);
 
     if (picked.kind === 'provider') return cmdLaunch(picked.name, rest);
-    if (picked.kind === 'default') return cmdLaunchDefault(rest);
+    if (picked.kind === 'direct') return cmdLaunchDirect(rest);
     if (picked.kind === 'create') {
       // 创建完成后立即用新供应商启动；创建被取消则回菜单。
       const created = await cmdCreate(rest);
@@ -335,14 +332,14 @@ async function cmdCreate(rest: string[]): Promise<string | undefined> {
       const picked = await pickBuiltinPreset();
       // 配置名默认取预设 key，可改——同一供应商可建多个账号配置
       // （如 deepseek-api / deepseek-work），不再固定为预设名。
-      name = (await ui.text({
+      name = (await ui.inkText({
         message: t('create.namePrompt', { default: picked.key }),
         initialValue: picked.key,
         validate: nameValidator,
       })).trim();
       preset = picked.preset;
     } else {
-      name = (await ui.text({
+      name = (await ui.inkText({
         message: t('create.customNamePrompt'),
         validate: nameValidator,
       })).trim();
@@ -380,7 +377,7 @@ async function cmdRemove(rest: string[]): Promise<void> {
   if (!name) { console.error(t('usage.removeName')); process.exit(1); }
   if (!providerExists(name)) { console.error(t('error.notFound', { name })); process.exit(1); }
   ui.intro(t('remove.title', { name }));
-  const ok = await ui.confirm({ message: t('remove.confirm', { name }), initialValue: false });
+  const ok = await ui.inkConfirm({ message: t('remove.confirm', { name }), initialValue: false });
   if (!ok) { ui.cancel(t('common.cancelled')); return; }
   removeProvider(name);
   ui.outro(t('remove.done', { name }));

@@ -57,7 +57,7 @@ export function dryRun(name: string, forwardedArgs: string[] = []) {
  * 直接启动 claude，使用 Claude Code 默认配置（~/.claude/settings.json）。
  * 不做合并、不写临时文件、不记录 lastUsed。
  */
-export function launchDefault(forwardedArgs: string[] = []) {
+export function launchDirect(forwardedArgs: string[] = []) {
   const bin = whichClaude();
   const args = [...forwardedArgs];
   // 擦除 ccs 自身 TUI 残留，给 claude 一个干净窗口（等同命令行直接启动）。
@@ -77,13 +77,13 @@ export function launchDefault(forwardedArgs: string[] = []) {
 }
 
 /**
- * 打印 default 模式将执行的命令，不启动。
+ * 打印 direct 模式将执行的命令，不启动。
  */
-export function dryRunDefault(forwardedArgs: string[] = []) {
+export function dryRunDirect(forwardedArgs: string[] = []) {
   const bin = whichClaude();
   const args = [...forwardedArgs];
   console.log(t('launch.willRun', { cmd: `${bin} ${args.join(' ')}` }));
-  console.log(t('launch.dryDefault'));
+  console.log(t('launch.dryDirect'));
 }
 
 /**

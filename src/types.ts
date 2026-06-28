@@ -21,12 +21,23 @@ export interface ProviderOptions {
   effort: EffortLevel;
 }
 
-/** 内置/用户预设结构。model 与 models 二选一：单模型或档位别名。 */
+/** 模型元信息：供应商支持列表、默认模型、档位配置。 */
+export interface ModelMeta {
+  /** 供应商支持的全部模型列表（用于 UI 展示）。 */
+  support?: string[];
+  /** 单模型模式的主模型。 */
+  default?: string;
+  /** 默认档位（如 'opus'）。 */
+  tier?: string;
+  /** 档位别名：haiku/sonnet/opus/fable → modelId。 */
+  tiers?: Partial<Record<Tier, string>>;
+}
+
+/** 内置/用户预设结构。model 字段统一为 ModelMeta。 */
 export interface Preset {
   label: string;
   baseUrl: string;
-  model?: string;
-  models?: Partial<Record<Tier, string>>;
+  model?: ModelMeta;
   options?: Partial<ProviderOptions>;
 }
 
@@ -43,6 +54,9 @@ export interface ProviderSettings {
 /** 表单模式：档位别名（多模型）或单一模型。 */
 export type FormMode = 'alias' | 'single';
 
+/** 认证方式。 */
+export type AuthMethod = 'auth_token' | 'api_key';
+
 /** 表单运行态。initState 构造、buildResult 消费、validateState 校验。 */
 export interface FormState {
   baseUrl: string;
@@ -50,11 +64,14 @@ export interface FormState {
   apiKey: string;
   keepExistingKey: boolean;
   mode: FormMode;
+  authMethod: AuthMethod;
   tier: string;
   /** ALIAS_TIERS → 模型 id（别名模式）。 */
   aliases: Record<string, string>;
   singleModel: string;
   options: ProviderOptions;
+  /** 原始 JSON 字符串，提交时解析合并到 env。 */
+  customParams: string;
 }
 
 /** 表单提交结果，等价于 ProviderSettings 片段。 */

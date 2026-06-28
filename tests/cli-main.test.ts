@@ -5,10 +5,11 @@ const M = vi.hoisted(() => ({
   uiMock: {
     intro: vi.fn(), outro: vi.fn(), cancel: vi.fn(), note: vi.fn(),
     log: { message: vi.fn(), info: vi.fn(), step: vi.fn(), warning: vi.fn(), error: vi.fn() },
-    select: vi.fn(), confirm: vi.fn(), text: vi.fn(), password: vi.fn(),
+    select: vi.fn(), confirm: vi.fn(), text: vi.fn(), password: vi.fn(), picker: vi.fn(),
+    inkSelect: vi.fn(), inkText: vi.fn(), inkConfirm: vi.fn(),
   },
   launchMock: {
-    launch: vi.fn(), dryRun: vi.fn(), launchDefault: vi.fn(), dryRunDefault: vi.fn(),
+    launch: vi.fn(), dryRun: vi.fn(), launchDirect: vi.fn(), dryRunDirect: vi.fn(),
     redactSettings: vi.fn((o: unknown) => o),
   },
   formMock: {
@@ -36,8 +37,8 @@ import { getVersion } from '../src/version.js';
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // 默认 use 菜单选 default 避免交互卡住
-  M.uiMock.select.mockResolvedValue({ kind: 'default' });
+  // 默认 use 菜单选 direct 避免交互卡住
+  M.uiMock.picker.mockResolvedValue({ kind: 'direct' });
 });
 
 async function runMain(args: string[]) {
@@ -88,13 +89,13 @@ describe('main argv dispatch', () => {
 
   test('bare flag (e.g. --foo) → treated as use <args>', async () => {
     await runMain(['--dangerously-skip-permissions']);
-    // use 菜单选 default → launchDefault
-    expect(M.launchMock.launchDefault).toHaveBeenCalledWith(['--dangerously-skip-permissions']);
+    // use 菜单选 direct → launchDirect
+    expect(M.launchMock.launchDirect).toHaveBeenCalledWith(['--dangerously-skip-permissions']);
   });
 
   test('no args → cmdUse', async () => {
     await runMain([]);
-    expect(M.launchMock.launchDefault).toHaveBeenCalled();
+    expect(M.launchMock.launchDirect).toHaveBeenCalled();
   });
 });
 

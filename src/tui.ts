@@ -1,4 +1,6 @@
 import * as clack from '@clack/prompts';
+import { runPicker } from './picker.js';
+import { inkSelect, inkText, inkConfirm } from './inkPrompts.js';
 
 /** 用户取消时抛出，由顶层捕获统一退出。 */
 export class Cancel extends Error {
@@ -10,10 +12,7 @@ function unwrap<T>(v: T | symbol): T {
   return v;
 }
 
-/**
- * 选择项。value 为对象时 label 必填；为字符串/数字/布尔时 label 可选。
- * 显式定义以避免 clack 的 Option<Value> 分布式条件类型对联合 value 展开导致赋值困难。
- */
+/** 选择项。value 为对象时 label 必填；为字符串/数字/布尔时 label 可选。 */
 export interface SelectOption<T> {
   value: T;
   label?: string;
@@ -63,6 +62,16 @@ export const ui = {
   async select<T>(opts: SelectParams<T>): Promise<T> {
     return unwrap<T>(await clack.select<T>(opts as Parameters<typeof clack.select<T>>[0]));
   },
+  /** 搜索选择器（ink）：输入过滤 + 可滚动下拉。 */
+  picker: runPicker,
+  /**
+   * ink 版 select/text/confirm：用于 ink（picker/表单）之后的提示。
+   * ink→clack 提示会因 termios 交接损坏，故这些场景一律用 ink 版。
+   * 非混合场景（无前序 ink）仍可继续用 select/confirm/text（clack）。
+   */
+  inkSelect,
+  inkText,
+  inkConfirm,
   async confirm(opts: ConfirmParams): Promise<boolean> {
     return unwrap<boolean>(await clack.confirm(opts));
   },
@@ -75,3 +84,4 @@ export const ui = {
 };
 
 export { clack };
+export type { PickerItem, PickerOpts } from './picker.js';

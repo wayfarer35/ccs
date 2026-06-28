@@ -1,6 +1,6 @@
 import { describe, test, expect, afterEach } from 'vitest';
 import {
-  redactSettings, whichClaude, dryRun, dryRunDefault,
+  redactSettings, whichClaude, dryRun, dryRunDirect,
 } from '../src/launch.js';
 import { writeJSON, providerFile } from '../src/config.js';
 import * as fs from 'node:fs';
@@ -71,7 +71,7 @@ describe('whichClaude', () => {
   });
 });
 
-describe('dryRun / dryRunDefault (no spawn)', () => {
+describe('dryRun / dryRunDirect (no spawn)', () => {
   afterEach(cleanup);
 
   test('dryRun prints redacted settings + will-run command without launching', () => {
@@ -93,8 +93,8 @@ describe('dryRun / dryRunDefault (no spawn)', () => {
     expect(() => dryRun(`__nonexistent_${process.pid}`, [])).toThrow();
   });
 
-  test('dryRunDefault prints default command, no settings file', () => {
-    const out = captureConsole(() => dryRunDefault(['--print', 'hi']));
+  test('dryRunDirect prints direct command, no settings file', () => {
+    const out = captureConsole(() => dryRunDirect(['--print', 'hi']));
     expect(out).toContain('claude');
     expect(out).toContain('--print');
     expect(out).not.toContain('--settings');

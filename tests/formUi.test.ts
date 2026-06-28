@@ -17,13 +17,14 @@ function makeForm(preset: Preset | null = PRESET, initial: { env?: Record<string
 }
 
 describe('tabFields', () => {
-  test('apikey tab: baseUrl(text) + token(password) + nextTab(button)', () => {
+  test('apikey tab: baseUrl(text) + authMethod(select) + token(password) + nextTab(button)', () => {
     const f = makeForm();
     const fs = tabFields(f, 0);
-    expect(fs.map((x) => x.id)).toEqual(['baseUrl', 'token', 'nextTab']);
+    expect(fs.map((x) => x.id)).toEqual(['baseUrl', 'authMethod', 'token', 'nextTab']);
     expect(fs[0]!.kind).toBe('text');
-    expect(fs[1]!.kind).toBe('password');
-    expect(fs[2]!.kind).toBe('button');
+    expect(fs[1]!.kind).toBe('select');
+    expect(fs[2]!.kind).toBe('password');
+    expect(fs[3]!.kind).toBe('button');
   });
 
   test('models tab in alias mode: aliases + tier + 4 alias fields + nextTab', () => {
@@ -38,6 +39,12 @@ describe('tabFields', () => {
     expect(ids).toContain('alias_HAIKU');
     expect(ids[ids.length - 1]).toBe('nextTab');
     expect(fs.find((x) => x.id === 'tier')!.kind).toBe('select');
+    // alias model fields are text (can type anything, optional search via Tab)
+    for (const tier of ['FABLE', 'OPUS', 'SONNET', 'HAIKU']) {
+      const field = fs.find((x) => x.id === `alias_${tier}`);
+      expect(field?.kind).toBe('text');
+      expect(field).toHaveProperty('support');
+    }
   });
 
   test('models tab in single mode: aliases + singleModel + nextTab (no tier/aliases)', () => {
@@ -46,19 +53,24 @@ describe('tabFields', () => {
     const ids = fs.map((x) => x.id);
     expect(ids).toEqual(['aliases', 'singleModel', 'nextTab']);
     expect(ids).not.toContain('tier');
+    // singleModel is text (can type anything, optional search via Tab)
+    const sf = fs.find((x) => x.id === 'singleModel');
+    expect(sf?.kind).toBe('text');
+    expect(sf).toHaveProperty('support');
   });
 
-  test('options tab: 2 toggles + effort(select) + autoCompact(number) + nextTab', () => {
+  test('options tab: 2 toggles + effort(select) + autoCompact(number) + customParams(text) + nextTab', () => {
     const f = makeForm();
     const fs = tabFields(f, 2);
     const ids = fs.map((x) => x.id);
     expect(ids).toEqual([
       'attributionHeader', 'disableNonEssentialTraffic',
-      'effort', 'autoCompactWindow', 'nextTab',
+      'effort', 'autoCompactWindow', 'customParams', 'nextTab',
     ]);
     expect(fs.find((x) => x.id === 'attributionHeader')!.kind).toBe('toggle');
     expect(fs.find((x) => x.id === 'effort')!.kind).toBe('select');
     expect(fs.find((x) => x.id === 'autoCompactWindow')!.kind).toBe('number');
+    expect(fs.find((x) => x.id === 'customParams')!.kind).toBe('text');
   });
 
   test('review tab: submit + cancel buttons only', () => {

@@ -153,11 +153,18 @@ const DICT: Record<string, LocaleEntry> = {
   'form.fNonEss': { en: 'Disable non-essential traffic (CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC)', 'zh-CN': '禁用非必要流量 (CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC)' },
   'form.fAutoCompact': { en: 'Auto-compact window (CLAUDE_CODE_AUTO_COMPACT_WINDOW)', 'zh-CN': '自动压缩窗口 (CLAUDE_CODE_AUTO_COMPACT_WINDOW)' },
   'form.fEffort': { en: 'Reasoning effort (CLAUDE_CODE_EFFORT_LEVEL)', 'zh-CN': '推理强度 (CLAUDE_CODE_EFFORT_LEVEL)' },
+  'form.fAuthMethod': { en: 'Auth Method', 'zh-CN': '认证方式' },
+  'form.authToken': { en: 'Auth Token (ANTHROPIC_AUTH_TOKEN)', 'zh-CN': 'Auth Token (ANTHROPIC_AUTH_TOKEN)' },
+  'form.apiUrlKey': { en: 'API Key (ANTHROPIC_API_KEY)', 'zh-CN': 'API Key (ANTHROPIC_API_KEY)' },
+  'form.fCustomParams': { en: 'Custom Params (JSON)', 'zh-CN': '自定义参数 (JSON)' },
+  'form.customParamsValidate': { en: 'Custom params JSON is invalid', 'zh-CN': '自定义参数 JSON 格式无效' },
+  'form.customParamsHint': { en: 'Extra env key-value pairs as JSON, e.g. {"allowed_openai_params": {"max_tokens": 8192}}', 'zh-CN': '额外 env 键值对 JSON，例如 {"allowed_openai_params": {"max_tokens": 8192}}' },
   'form.spaceHint': { en: '(Space to change)', 'zh-CN': '(空格切换)' },
   'tab.next': { en: 'Next →', 'zh-CN': '下一个 →' },
+  'form.acHint': { en: '↑↓=pick Enter=use', 'zh-CN': '↑↓=选 Enter=用' },
   'form.help': {
-    en: 'Tab=switch tab  ↑↓/←→=field  ←→=cursor (in text)  Space=toggle/cycle  n=next tab  Enter=next/submit  Esc=cancel',
-    'zh-CN': 'Tab=切标签  ↑↓/←→=切字段  ←→=光标(文本内)  Space=开关/切换  n=下一标签  Enter=下一步/提交  Esc=取消',
+    en: 'Tab=switch tab  ↑↓=field (↑↓=pick model on model fields)  ←→=cursor (in text)  Space=toggle/cycle  n=next tab  Enter=next/accept/submit  Esc=cancel',
+    'zh-CN': 'Tab=切标签  ↑↓=切字段(模型字段上 ↑↓=选模型)  ←→=光标(文本内)  Space=开关/切换  n=下一标签  Enter=下一步/采纳/提交  Esc=取消',
   },
 
   // ---------- preview / edit loop ----------
@@ -170,8 +177,8 @@ const DICT: Record<string, LocaleEntry> = {
 
   // ---------- use ----------
   'use.select': { en: 'Select a provider', 'zh-CN': '选择供应商' },
-  'use.default': { en: 'default', 'zh-CN': 'default' },
-  'use.defaultHint': { en: 'Claude Code default config', 'zh-CN': 'Claude Code 默认配置' },
+  'use.direct': { en: 'direct', 'zh-CN': 'direct' },
+  'use.directHint': { en: 'Claude Code default config (no provider merge)', 'zh-CN': 'Claude Code 默认配置（不走供应商）' },
   'use.create': { en: 'create', 'zh-CN': 'create' },
   'use.createHint': { en: 'Create a new provider', 'zh-CN': '创建新供应商' },
   'use.edit': { en: 'edit', 'zh-CN': 'edit' },
@@ -181,6 +188,13 @@ const DICT: Record<string, LocaleEntry> = {
   'use.editSelect': { en: 'Select a config to edit', 'zh-CN': '选择要修改的配置' },
   'use.removeSelect': { en: 'Select a config to remove', 'zh-CN': '选择要删除的配置' },
 
+  // ---------- picker (ink search-select) ----------
+  'picker.placeholder': { en: 'type to filter providers...', 'zh-CN': '输入过滤供应商...' },
+  'picker.noMatch': { en: 'no match', 'zh-CN': '无匹配' },
+  'picker.providers': { en: 'Providers ({count})', 'zh-CN': '供应商配置 ({count})' },
+  'picker.actions': { en: 'Actions', 'zh-CN': '操作' },
+  'picker.help': { en: 'type=filter providers  ↑↓=select  Enter=confirm  Esc=cancel', 'zh-CN': '输入=过滤供应商  ↑↓=选择  Enter=确认  Esc=取消' },
+
   // ---------- common / show / init ----------
   'common.openEditor': { en: 'Opening ~/.claude/settings.json (common config) in editor...', 'zh-CN': '在编辑器中打开 ~/.claude/settings.json (通用配置)...' },
   'common.createdEmpty': { en: 'Created empty settings file: {file}', 'zh-CN': '已创建空配置文件: {file}' },
@@ -188,7 +202,7 @@ const DICT: Record<string, LocaleEntry> = {
   // ---------- launch / dry-run ----------
   'launch.willRun': { en: 'Will run: {cmd}', 'zh-CN': '将执行: {cmd}' },
   'launch.dryTmp': { en: '(settings file: {file} — the provider config itself, passed directly to --settings; dry-run does not launch or create any file)', 'zh-CN': '（配置文件: {file}，即 provider 配置本身，直接作为 --settings 目标；dry-run 不启动、不创建文件）' },
-  'launch.dryDefault': { en: '(default mode: no merge, no temp file — uses ~/.claude/settings.json as-is)', 'zh-CN': '（default 模式：不合并、无临时文件，直接用 ~/.claude/settings.json）' },
+  'launch.dryDirect': { en: '(direct mode: no merge, no temp file — uses ~/.claude/settings.json as-is)', 'zh-CN': '（direct 模式：不合并、无临时文件，直接用 ~/.claude/settings.json）' },
 
   // ---------- config ----------
   'config.localeSet': { en: 'Locale set to {locale}', 'zh-CN': '语言已设为 {locale}' },
