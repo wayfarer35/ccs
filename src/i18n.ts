@@ -193,7 +193,7 @@ const DICT: Record<string, LocaleEntry> = {
   'picker.noMatch': { en: 'no match', 'zh-CN': '无匹配' },
   'picker.providers': { en: 'Providers ({count})', 'zh-CN': '供应商配置 ({count})' },
   'picker.actions': { en: 'Actions', 'zh-CN': '操作' },
-  'picker.help': { en: 'type=filter providers  ↑↓=select  Enter=confirm  Esc=cancel', 'zh-CN': '输入=过滤供应商  ↑↓=选择  Enter=确认  Esc=取消' },
+  'picker.help': { en: 'type=filter providers  ↑↓=select  Tab=jump region  Enter=confirm  Esc=cancel', 'zh-CN': '输入=过滤供应商  ↑↓=选择  Tab=跳转区域  Enter=确认  Esc=取消' },
 
   // ---------- common / show / init ----------
   'common.openEditor': { en: 'Opening ~/.claude/settings.json (common config) in editor...', 'zh-CN': '在编辑器中打开 ~/.claude/settings.json (通用配置)...' },

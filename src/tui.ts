@@ -1,4 +1,3 @@
-import * as clack from '@clack/prompts';
 import { runPicker } from './picker.js';
 import { inkSelect, inkText, inkConfirm } from './inkPrompts.js';
 
@@ -7,81 +6,24 @@ export class Cancel extends Error {
   constructor() { super('cancel'); this.name = 'Cancel'; }
 }
 
-function unwrap<T>(v: T | symbol): T {
-  if (clack.isCancel(v)) throw new Cancel();
-  return v;
-}
-
-/** 选择项。value 为对象时 label 必填；为字符串/数字/布尔时 label 可选。 */
-export interface SelectOption<T> {
-  value: T;
-  label?: string;
-  hint?: string;
-}
-
-export interface SelectParams<T> {
-  message: string;
-  options: ReadonlyArray<SelectOption<T>>;
-  initialValue?: T;
-  maxItems?: number;
-}
-
-interface ConfirmParams {
-  message: string;
-  active?: string;
-  inactive?: string;
-  initialValue?: boolean;
-}
-
-interface TextParams {
-  message: string;
-  placeholder?: string;
-  defaultValue?: string;
-  initialValue?: string;
-  validate?: (value: string) => string | Error | undefined;
-}
-
-interface PasswordParams {
-  message: string;
-  mask?: string;
-  validate?: (value: string) => string | Error | undefined;
-}
-
+// 交互层完全由 ink 承担（runPicker / inkSelect / inkText / inkConfirm / 表单）。
+// 此处仅保留 ui 表面：cancel/log 走纯 console（不进 raw mode），其余交互一律 ink。
 export const ui = {
-  intro: (t: string) => clack.intro(t),
-  outro: (t: string) => clack.outro(t),
-  note: (body: string, title?: string) => clack.note(body, title),
-  cancel: (t: string) => clack.cancel(t),
+  /** 取消提示（如顶层 Cancel 兜底）。纯 console 输出一行。 */
+  cancel: (t: string) => console.log(t),
   log: {
-    message: (t: string) => clack.log.message(t),
-    info: (t: string) => clack.log.info(t),
-    step: (t: string) => clack.log.step(t),
-    warning: (t: string) => clack.log.warn(t),
-    error: (t: string) => clack.log.error(t),
-  },
-  async select<T>(opts: SelectParams<T>): Promise<T> {
-    return unwrap<T>(await clack.select<T>(opts as Parameters<typeof clack.select<T>>[0]));
+    message: (t: string) => console.log(t),
+    info: (t: string) => console.info(t),
+    step: (t: string) => console.log(t),
+    warning: (t: string) => console.warn(t),
+    error: (t: string) => console.error(t),
   },
   /** 搜索选择器（ink）：输入过滤 + 可滚动下拉。 */
   picker: runPicker,
-  /**
-   * ink 版 select/text/confirm：用于 ink（picker/表单）之后的提示。
-   * ink→clack 提示会因 termios 交接损坏，故这些场景一律用 ink 版。
-   * 非混合场景（无前序 ink）仍可继续用 select/confirm/text（clack）。
-   */
+  /** ink 版 select/text/confirm：交互提示一律用 ink。 */
   inkSelect,
   inkText,
   inkConfirm,
-  async confirm(opts: ConfirmParams): Promise<boolean> {
-    return unwrap<boolean>(await clack.confirm(opts));
-  },
-  async text(opts: TextParams): Promise<string> {
-    return unwrap<string>(await clack.text(opts));
-  },
-  async password(opts: PasswordParams): Promise<string> {
-    return unwrap<string>(await clack.password(opts));
-  },
 };
 
-export { clack };
 export type { PickerItem, PickerOpts } from './picker.js';

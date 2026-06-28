@@ -1,0 +1,30 @@
+{
+  "id": "ui-ink-refactor",
+  "name": "ui-ink-refactor",
+  "title": "UI 交互层重构：纯 ink + 页面独占",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "evan",
+  "assignee": "evan",
+  "createdAt": "2026-06-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "06-28-pure-ink",
+    "06-28-picker-nav",
+    "06-28-fullscreen-screens"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

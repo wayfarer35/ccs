@@ -2,6 +2,7 @@ import { Box, render, Text, useInput, useStdout } from 'ink';
 import React, { useEffect, useMemo, useState } from 'react';
 import { t } from './i18n.js';
 import { Cancel } from './tui.js';
+import { clearScreen } from './screen.js';
 
 const h = React.createElement;
 
@@ -28,6 +29,8 @@ export interface PickerOpts<T> {
   initialValue?: T;
   /** items 区最多可见行数，默认 5。 */
   maxItems?: number;
+  /** 顶部状态横幅（如 edit/remove 后的 ✓ Updated xxx）；仅显示一个菜单周期。 */
+  statusMessage?: string;
 }
 
 interface PickerAppProps<T> {
@@ -36,11 +39,12 @@ interface PickerAppProps<T> {
   actions: PickerItem<T>[];
   initialIndex: number;
   maxItems: number;
+  statusMessage?: string;
   onDone: (v: T) => void;
   onCancel: () => void;
 }
 
-function PickerApp<T>({ message, items, actions, initialIndex, maxItems, onDone, onCancel }: PickerAppProps<T>): React.ReactNode {
+function PickerApp<T>({ message, items, actions, initialIndex, maxItems, statusMessage, onDone, onCancel }: PickerAppProps<T>): React.ReactNode {
   const [filter, setFilter] = useState('');
   const [index, setIndex] = useState(initialIndex);
   const { stdout } = useStdout();
@@ -71,6 +75,15 @@ function PickerApp<T>({ message, items, actions, initialIndex, maxItems, onDone,
     if (key.return) {
       const it = combined[Math.min(index, combined.length - 1)];
       if (it) onDone(it.value);
+      return;
+    }
+    // Tab：在 items 区与 actions 区之间跳转（区域捷径，免得供应商多时连续 ↓）。
+    // 区域由当前光标位置派生（index < filtered.length ⇒ items 区），无需单独状态。
+    if (key.tab) {
+      const cur = Math.min(index, combined.length - 1);
+      const inItems = cur < filtered.length;
+      if (inItems) { if (actions.length) setIndex(filtered.length); }
+      else { if (filtered.length) setIndex(0); }
       return;
     }
     if (key.upArrow) { setIndex((i) => Math.max(0, i - 1)); return; }
@@ -113,6 +126,9 @@ function PickerApp<T>({ message, items, actions, initialIndex, maxItems, onDone,
   const hasItems = items.length > 0;
 
   return h(Box, { flexDirection: 'column' },
+    statusMessage
+      ? h(Text, { color: 'green' }, `✓ ${statusMessage}`)
+      : null,
     h(Text, { color: 'cyan', bold: true }, message),
     h(Text, { dimColor: true }, '─'.repeat(Math.min(cols, 64))),
 
@@ -157,7 +173,7 @@ function PickerApp<T>({ message, items, actions, initialIndex, maxItems, onDone,
  * ↑↓ 选择、Enter 确认、Esc 取消（抛 Cancel）。
  */
 export async function runPicker<T>(opts: PickerOpts<T>): Promise<T> {
-  const { message, items, actions = [], initialValue, maxItems = 5 } = opts;
+  const { message, items, actions = [], initialValue, maxItems = 5, statusMessage } = opts;
   const arr = [...items];
   const act = [...actions];
   const combined = [...arr, ...act];
@@ -172,6 +188,9 @@ export async function runPicker<T>(opts: PickerOpts<T>): Promise<T> {
     const onCancel = () => { inst.unmount(); reject(new Cancel()); };
     // 泛型函数组件在 createElement 处无法推断 T，显式具化后再渲染。
     const App = PickerApp as unknown as (props: PickerAppProps<T>) => React.ReactNode;
-    inst = render(h(App, { message, items: arr, actions: act, initialIndex, maxItems, onDone, onCancel }));
+    const props: PickerAppProps<T> = { message, items: arr, actions: act, initialIndex, maxItems, onDone, onCancel };
+    if (statusMessage !== undefined) props.statusMessage = statusMessage;
+    clearScreen();
+    inst = render(h(App, props));
   });
 }

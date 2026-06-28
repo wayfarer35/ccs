@@ -6,7 +6,7 @@ import { CONFIG_FILE } from '../src/config.js';
 const M = vi.hoisted(() => ({
   spawnSync: vi.fn(() => ({ status: 0 })),
   uiMock: {
-    intro: vi.fn(), outro: vi.fn(), cancel: vi.fn(), note: vi.fn(),
+    cancel: vi.fn(),
     log: { message: vi.fn(), info: vi.fn(), step: vi.fn(), warning: vi.fn(), error: vi.fn() },
     select: vi.fn(), confirm: vi.fn(), text: vi.fn(), password: vi.fn(), picker: vi.fn(),
     inkSelect: vi.fn(), inkText: vi.fn(), inkConfirm: vi.fn(),
@@ -22,6 +22,7 @@ const M = vi.hoisted(() => ({
 }));
 
 vi.mock('node:child_process', () => ({ spawnSync: M.spawnSync, default: { spawnSync: M.spawnSync } }));
+vi.mock('../src/screen.js', () => ({ clearScreen: vi.fn() }));
 vi.mock('../src/tui.js', () => ({
   ui: M.uiMock,
   Cancel: class Cancel extends Error { constructor() { super('cancel'); this.name = 'Cancel'; } },
@@ -198,12 +199,12 @@ describe('cmdRemove', () => {
     expect(fs.existsSync(providerFile(TEST_NAME))).toBe(false);
   });
 
-  test('confirm no → keeps', async () => {
+  test('confirm no → keeps, returns undefined (no cancel print)', async () => {
     writeJSON(providerFile(TEST_NAME), { env: {} });
     uiMock.inkConfirm.mockResolvedValueOnce(false);
-    await cmdRemove([TEST_NAME]);
+    const msg = await cmdRemove([TEST_NAME]);
     expect(fs.existsSync(providerFile(TEST_NAME))).toBe(true);
-    expect(uiMock.cancel).toHaveBeenCalled();
+    expect(msg).toBeUndefined();
   });
 
   test('missing name → exit', async () => {
@@ -237,9 +238,9 @@ describe('cmdConfig', () => {
   });
 
   test('locale with no val → interactive select', async () => {
-    uiMock.select.mockResolvedValueOnce('en');
+    uiMock.inkSelect.mockResolvedValueOnce('en');
     await cmdConfigLocale(undefined);
-    expect(uiMock.select).toHaveBeenCalled();
+    expect(uiMock.inkSelect).toHaveBeenCalled();
   });
 });
 

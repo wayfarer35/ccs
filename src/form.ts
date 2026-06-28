@@ -285,7 +285,9 @@ export function validateState(state: FormState): string | null {
  * @param opts.preset   预设（create 时预填，可为 null=自定义）
  * @returns 最终 settings 片段
  */
-export async function providerFormWithPreview(opts: { initial?: InitInput; preset?: Preset | null } = {}): Promise<ProviderSettings> {
-  const { initial = {}, preset = null } = opts;
-  return runProviderForm({ initial, preset });
+export async function providerFormWithPreview(opts: { initial?: InitInput; preset?: Preset | null; title?: string } = {}): Promise<ProviderSettings> {
+  const { initial = {}, preset = null, title } = opts;
+  const runOpts: { initial: InitInput; preset: Preset | null; title?: string } = { initial, preset };
+  if (title !== undefined) runOpts.title = title;
+  return runProviderForm(runOpts);
 }

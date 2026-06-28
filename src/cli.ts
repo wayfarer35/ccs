@@ -13,6 +13,7 @@ import { providerFormWithPreview, chooseCreateMode, pickBuiltinPreset } from './
 import { launch, dryRun, launchDirect, dryRunDirect, redactSettings } from './launch.js';
 import { ui, Cancel, type PickerItem, type PickerOpts } from './tui.js';
 import { t, detectLocale, setConfig, LOCALES } from './i18n.js';
+import { clearScreen } from './screen.js';
 import { getVersion } from './version.js';
 import { completeCandidates, completionScript, completionHelp } from './completion.js';
 import type { Preset, ProviderSettings } from './types.js';
@@ -126,8 +127,8 @@ async function main(): Promise<void> {
       case 'list': case 'ls': return cmdList();
       case 'presets': return cmdPresets();
       case 'create': { await cmdCreate(rest); return; }
-      case 'edit': return await cmdEdit(rest);
-      case 'remove': case 'rm': return await cmdRemove(rest);
+      case 'edit': { finishStandalone(await cmdEdit(rest)); return; }
+      case 'remove': case 'rm': { finishStandalone(await cmdRemove(rest)); return; }
       case 'common': return cmdCommon();
       case 'show': return cmdShow(rest);
       case 'config': return await cmdConfig(rest);
@@ -150,6 +151,16 @@ async function main(): Promise<void> {
 }
 
 // ---------- launch ----------
+
+/**
+ * 独立命令（ccs edit/remove）的终态输出：清屏后打印一行结果消息。
+ * 菜单循环（cmdUse）路径不走这里——那里由 picker 顶部横幅显示结果。
+ */
+function finishStandalone(msg: string | undefined): void {
+  if (!msg) return;
+  clearScreen();
+  console.log(msg);
+}
 
 function cmdLaunch(name: string, rest: string[]): void {
   const dry = rest.includes('--dry-run');
@@ -194,6 +205,8 @@ async function pickExistingProvider(message: string): Promise<string | null> {
 async function cmdUse(rest: string[]): Promise<void> {
   // 循环菜单：选供应商/direct/create 会启动并返回；
   // 选 edit/remove 完成后回到菜单继续，子流程取消（Esc）也回菜单而非退出。
+  // statusMessage：edit/remove 完成后由下一轮 picker 顶部横幅显示一个周期。
+  let statusMessage: string | undefined;
   for (;;) {
     const names = listProviders();
     const last = getLastUsed();
@@ -222,7 +235,9 @@ async function cmdUse(rest: string[]): Promise<void> {
 
     const pickerOpts: PickerOpts<UsePick> = { message: t('use.select'), items, actions };
     if (initial) pickerOpts.initialValue = initial;
+    if (statusMessage) pickerOpts.statusMessage = statusMessage;
     const picked = await ui.picker<UsePick>(pickerOpts);
+    statusMessage = undefined; // 横幅只显示一个周期
 
     if (picked.kind === 'provider') return cmdLaunch(picked.name, rest);
     if (picked.kind === 'direct') return cmdLaunchDirect(rest);
@@ -235,9 +250,9 @@ async function cmdUse(rest: string[]): Promise<void> {
     if (picked.kind === 'edit') {
       try {
         const name = await pickExistingProvider(t('use.editSelect'));
-        if (name) await cmdEdit([name]);
+        if (name) { const msg = await cmdEdit([name]); if (msg) statusMessage = msg; }
       } catch (e) {
-        if (e instanceof Cancel) { ui.cancel(t('common.cancelled')); continue; }
+        if (e instanceof Cancel) { continue; }
         throw e;
       }
       continue;
@@ -245,9 +260,9 @@ async function cmdUse(rest: string[]): Promise<void> {
     if (picked.kind === 'remove') {
       try {
         const name = await pickExistingProvider(t('use.removeSelect'));
-        if (name) await cmdRemove([name]);
+        if (name) { const msg = await cmdRemove([name]); if (msg) statusMessage = msg; }
       } catch (e) {
-        if (e instanceof Cancel) { ui.cancel(t('common.cancelled')); continue; }
+        if (e instanceof Cancel) { continue; }
         throw e;
       }
       continue;
@@ -304,7 +319,7 @@ function validateName(name: string): void {
 }
 
 /**
- * 配置名校验器（供 clack text 的 validate 内联使用）。
+ * 配置名校验器（供 inkText 的 validate 内联使用）。
  * 检查非空、非法字符、重名——重名即时提示，引导用户改名而非直接失败。
  * 返回错误消息字符串，或 undefined 表示通过。
  */
@@ -352,35 +367,33 @@ async function cmdCreate(rest: string[]): Promise<string | undefined> {
     throw new Error(t('error.exists', { name }));
   }
 
-  ui.intro(t('create.kindTitle', { name }));
-  const result = await providerFormWithPreview({ initial: {}, preset });
+  const result = await providerFormWithPreview({ initial: {}, preset, title: t('create.kindTitle', { name }) });
   writeJSON(providerFile(name), result);
-  ui.outro(t('create.created', { file: providerFile(name) }));
+  clearScreen();
+  console.log(t('create.created', { file: providerFile(name) }));
   return name;
 }
 
-async function cmdEdit(rest: string[]): Promise<void> {
+async function cmdEdit(rest: string[]): Promise<string | undefined> {
   const name = rest[0];
   const raw = rest.includes('--raw');
   if (!name) { console.error(t('usage.editName')); process.exit(1); }
   if (!providerExists(name)) { console.error(t('error.notFound', { name })); process.exit(1); }
-  if (raw) return editRaw(providerFile(name));
-  ui.intro(t('edit.title', { name }));
+  if (raw) { editRaw(providerFile(name)); return undefined; }
   const initial = readProvider(name) || {};
-  const result = await providerFormWithPreview({ initial });
+  const result = await providerFormWithPreview({ initial, title: t('edit.title', { name }) });
   writeJSON(providerFile(name), result);
-  ui.outro(t('edit.updated', { file: providerFile(name) }));
+  return t('edit.updated', { file: providerFile(name) });
 }
 
-async function cmdRemove(rest: string[]): Promise<void> {
+async function cmdRemove(rest: string[]): Promise<string | undefined> {
   const name = rest[0];
   if (!name) { console.error(t('usage.removeName')); process.exit(1); }
   if (!providerExists(name)) { console.error(t('error.notFound', { name })); process.exit(1); }
-  ui.intro(t('remove.title', { name }));
   const ok = await ui.inkConfirm({ message: t('remove.confirm', { name }), initialValue: false });
-  if (!ok) { ui.cancel(t('common.cancelled')); return; }
+  if (!ok) return undefined;
   removeProvider(name);
-  ui.outro(t('remove.done', { name }));
+  return t('remove.done', { name });
 }
 
 function editRaw(file: string): void {
@@ -433,7 +446,7 @@ async function cmdConfigLocale(val: string | undefined): Promise<void> {
     return;
   }
   const current = detectLocale();
-  const picked = await ui.select<string>({
+  const picked = await ui.inkSelect<string>({
     message: t('config.localePrompt'),
     options: LOCALES.map((l) => ({ value: l.value, label: l.label, hint: l.value === current ? t('list.lastUsed') : '' })),
     initialValue: valid.includes(current) ? current : 'en',

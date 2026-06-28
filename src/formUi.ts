@@ -11,6 +11,7 @@ import {
 import { t } from './i18n.js';
 import { redactSettings } from './launch.js';
 import { Cancel } from './tui.js';
+import { clearScreen } from './screen.js';
 import type { EffortLevel, FormState, Preset, ProviderSettings } from './types.js';
 
 const h = React.createElement;
@@ -577,11 +578,12 @@ function ReviewBody({ form, state, blinkOn }: ReviewBodyProps): React.ReactNode 
 
 interface FormAppProps {
   initialForm: RuntimeForm;
+  title?: string;
   onDone: (form: RuntimeForm) => void;
   onCancel: () => void;
 }
 
-function FormApp({ initialForm, onDone, onCancel }: FormAppProps): React.ReactNode {
+function FormApp({ initialForm, title, onDone, onCancel }: FormAppProps): React.ReactNode {
   const [state, dispatch] = useReducer(reduce, initialForm, init);
   const { stdout } = useStdout();
   const cols = stdout && stdout.columns ? stdout.columns : 60;
@@ -675,6 +677,7 @@ function FormApp({ initialForm, onDone, onCancel }: FormAppProps): React.ReactNo
   const acIndex = state.ac ? state.ac.index : null;
 
   return h(Box, { flexDirection: 'column' },
+    title ? h(Text, { color: 'cyan', bold: true }, title) : null,
     // tab bar
     h(Box, { flexDirection: 'row', gap: 1 },
       ...TAB_IDS.map((id, i) => {
@@ -708,10 +711,11 @@ function FormApp({ initialForm, onDone, onCancel }: FormAppProps): React.ReactNo
 interface RunOpts {
   initial?: { env?: Record<string, string>; model?: string };
   preset?: Preset | null;
+  title?: string;
 }
 
 export function runProviderForm(opts: RunOpts = {}): Promise<ProviderSettings> {
-  const { initial = {}, preset = null } = opts;
+  const { initial = {}, preset = null, title } = opts;
   const base = initState(initial, preset);
   // 携带供应商支持的模型列表（用于模型字段内联下拉）。
   const modelSupport = preset?.model?.support;
@@ -725,6 +729,9 @@ export function runProviderForm(opts: RunOpts = {}): Promise<ProviderSettings> {
     let inst: ReturnType<typeof render>;
     const onDone = (form: RuntimeForm) => { inst.unmount(); resolve(buildResult(toFormState(form))); };
     const onCancel = () => { inst.unmount(); reject(new Cancel()); };
-    inst = render(h(FormApp, { initialForm, onDone, onCancel }));
+    const props: FormAppProps = { initialForm, onDone, onCancel };
+    if (title !== undefined) props.title = title;
+    clearScreen();
+    inst = render(h(FormApp, props));
   });
 }

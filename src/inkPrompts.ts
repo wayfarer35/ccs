@@ -1,12 +1,12 @@
 import { Box, render, Text, useInput, useStdout } from 'ink';
 import React, { useEffect, useState } from 'react';
 import { Cancel } from './tui.js';
+import { clearScreen } from './screen.js';
 
 const h = React.createElement;
 
 // ink 版基础提示：select / text / confirm。
-// 存在原因：ink（picker/表单）卸载后紧接 clack 提示会因 termios 交接损坏
-// （clack 的 setRawMode 与 ink 残留状态冲突），故 picker 之后的提示一律用 ink。
+// 交互层完全由 ink 承担（无 clack）；这些组件供各命令的简单提示复用。
 // 因 ink TUI 难以单测，本文件排除出覆盖率统计（同 picker.ts/formUi.ts）。
 
 export interface InkSelectOption<T> {
@@ -91,6 +91,7 @@ export async function inkSelect<T>(opts: InkSelectParams<T>): Promise<T> {
     const onDone = (v: T) => { inst.unmount(); resolve(v); };
     const onCancel = () => { inst.unmount(); reject(new Cancel()); };
     const App = SelectApp as unknown as (p: { message: string; options: InkSelectOption<T>[]; initialIndex: number; onDone: (v: T) => void; onCancel: () => void; }) => React.ReactNode;
+    clearScreen();
     inst = render(h(App, { message, options: arr, initialIndex, onDone, onCancel }));
   });
 }
@@ -154,6 +155,7 @@ export async function inkText(opts: InkTextParams): Promise<string> {
     const props: Parameters<typeof TextApp>[0] = { message, initial: initialValue, onDone, onCancel };
     if (opts.placeholder !== undefined) props.placeholder = opts.placeholder;
     if (opts.validate !== undefined) props.validate = opts.validate;
+    clearScreen();
     inst = render(h(TextApp, props));
   });
 }
@@ -191,6 +193,7 @@ export async function inkConfirm(opts: InkConfirmParams): Promise<boolean> {
     let inst: ReturnType<typeof render>;
     const onDone = (v: boolean) => { inst.unmount(); resolve(v); };
     const onCancel = () => { inst.unmount(); reject(new Cancel()); };
+    clearScreen();
     inst = render(h(ConfirmApp, { message, active, inactive, initial: initialValue, onDone, onCancel }));
   });
 }
