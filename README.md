@@ -13,12 +13,14 @@ Claude Code 的供应商接入全靠 `env`（`ANTHROPIC_BASE_URL` / `ANTHROPIC_A
 ## 安装
 
 ```bash
-git clone <repo> && cd ccs
-npm install
-npm link        # 全局注册 ccs 命令
+npm install -g @wayfarer35/ccs
 ```
 
-或本地直接跑：`npm run build && node dist/cli.js ...`
+安装后即可使用 `ccs` 命令：
+
+```bash
+ccs --help
+```
 
 ## 配置存放
 
