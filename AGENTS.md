@@ -21,6 +21,19 @@ npm test            # vitest run
 npm run coverage    # vitest run --coverage（formUi 除外 ≥80%）
 ```
 
+## 发版
+
+版本号单一真源是 `package.json` 的 `version`，发版统一走 `standard-version`，日常提交不自动 bump：
+
+```bash
+npm run release         # patch：0.2.0 → 0.2.1
+npm run release-minor   # minor：0.2.0 → 0.3.0
+npm run release-major   # major：0.2.0 → 1.0.0
+git push --follow-tags  # 推送 v* tag 触发 CI
+```
+
+`standard-version` 自增版本号、生成/更新 `CHANGELOG.md` 并打 `v*` tag。推送 tag 后 `.github/workflows/release.yml` 校验 tag 与 `package.json` 版本一致，构建并发布到 npm，同时创建 GitHub Release。
+
 ## Project Notes
 
 - **ESM + TypeScript** — `"type": "module"`，源文件使用 `.ts` 扩展名，经 `tsc` 编译到 `dist/`

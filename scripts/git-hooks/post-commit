@@ -1,4 +1,0 @@
-#!/bin/sh
-# post-commit 入口：commit 创建后调用 bump.mjs，按 message 前缀 bump 版本号
-# 并用 --amend 并入本次提交。无参数。
-exec node "$(dirname "$0")/bump.mjs"
