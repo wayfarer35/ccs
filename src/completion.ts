@@ -118,6 +118,6 @@ export function completionHelp(shell?: string): string {
     'Install (bash):  eval "$(ccs completion bash)"   # or append to ~/.bashrc',
     'Install (zsh):   eval "$(ccs completion zsh)"    # or append to ~/.zshrc',
     '',
-    'Global install (npm i -g ccs) auto-writes the eval line into your rc.',
+    'Global install (npm i -g @wayfarer35/ccs) auto-writes the eval line into your rc.',
   ].join('\n');
 }
