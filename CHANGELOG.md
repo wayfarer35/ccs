@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.3](https://github.com/wayfarer35/ccs/compare/v0.2.2...v0.2.3) (2026-06-28)
+
+
+### Bug Fixes
+
+* **package:** include scripts/postinstall.mjs in published files ([e9a0893](https://github.com/wayfarer35/ccs/commit/e9a089341477c32be99389723dfa871064d8250d))
+
 ### [0.2.2](https://github.com/wayfarer35/ccs/compare/v0.2.1...v0.2.2) (2026-06-28)
 
 
