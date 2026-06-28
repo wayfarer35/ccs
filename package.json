@@ -8,6 +8,7 @@
   },
   "files": [
     "dist",
+    "scripts/postinstall.mjs",
     "README.md"
   ],
   "engines": {
