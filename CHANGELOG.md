@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.4](https://github.com/wayfarer35/ccs/compare/v0.2.3...v0.2.4) (2026-07-01)
+
+
+### Features
+
+* **cli:** add 'ccs official' subcommand to launch with Claude Code's own default config ([827bd04](https://github.com/wayfarer35/ccs/commit/827bd04e783a6d262d37f8daa3d5558ec9b02345))
+
 ### [0.2.3](https://github.com/wayfarer35/ccs/compare/v0.2.2...v0.2.3) (2026-06-28)
 
 
