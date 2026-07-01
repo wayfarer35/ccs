@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.5](https://github.com/wayfarer35/ccs/compare/v0.2.4...v0.2.5) (2026-07-01)
+
+
+### Bug Fixes
+
+* **ci:** grant contents:write permission so release job can create GitHub Release ([9044632](https://github.com/wayfarer35/ccs/commit/90446322647e6b1a7f9e75b477775fe5af2c2315))
+
 ### [0.2.4](https://github.com/wayfarer35/ccs/compare/v0.2.3...v0.2.4) (2026-07-01)
 
 
