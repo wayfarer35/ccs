@@ -18,7 +18,7 @@ jobs:
     if: github.repository == 'wayfarer35/ccs'
 
     permissions:
-      contents: read
+      contents: write # 创建 GitHub Release 需要
       id-token: write # 预留：如改用 npm provenance（可信发布）需要
 
     steps:
