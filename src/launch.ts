@@ -83,7 +83,7 @@ export function dryRunDirect(forwardedArgs: string[] = []) {
   const bin = whichClaude();
   const args = [...forwardedArgs];
   console.log(t('launch.willRun', { cmd: `${bin} ${args.join(' ')}` }));
-  console.log(t('launch.dryDirect'));
+  console.log(t('launch.dryOfficial'));
 }
 
 /**

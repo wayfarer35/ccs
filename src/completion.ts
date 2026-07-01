@@ -12,7 +12,7 @@ import { listProviders } from './config.js';
 import { presetList } from './presets.js';
 
 /** 子命令（含别名）。 */
-const SUBCOMMANDS = ['list', 'ls', 'presets', 'create', 'edit', 'remove', 'rm', 'common', 'show', 'config', 'use'];
+const SUBCOMMANDS = ['list', 'ls', 'presets', 'create', 'edit', 'remove', 'rm', 'common', 'show', 'config', 'use', 'official'];
 /** 全局 flag。 */
 const GLOBAL_FLAGS = ['-h', '--help', '-v', '--version'];
 /** 第一个参数位补 provider 名的子命令。 */

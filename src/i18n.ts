@@ -177,8 +177,8 @@ const DICT: Record<string, LocaleEntry> = {
 
   // ---------- use ----------
   'use.select': { en: 'Select a provider', 'zh-CN': '选择供应商' },
-  'use.direct': { en: 'direct', 'zh-CN': 'direct' },
-  'use.directHint': { en: 'Claude Code default config (no provider merge)', 'zh-CN': 'Claude Code 默认配置（不走供应商）' },
+  'use.official': { en: 'official', 'zh-CN': 'official' },
+  'use.officialHint': { en: "Claude Code's own default config (no provider)", 'zh-CN': 'Claude Code 自身默认配置（不走供应商）' },
   'use.create': { en: 'create', 'zh-CN': 'create' },
   'use.createHint': { en: 'Create a new provider', 'zh-CN': '创建新供应商' },
   'use.edit': { en: 'edit', 'zh-CN': 'edit' },
@@ -202,7 +202,7 @@ const DICT: Record<string, LocaleEntry> = {
   // ---------- launch / dry-run ----------
   'launch.willRun': { en: 'Will run: {cmd}', 'zh-CN': '将执行: {cmd}' },
   'launch.dryTmp': { en: '(settings file: {file} — the provider config itself, passed directly to --settings; dry-run does not launch or create any file)', 'zh-CN': '（配置文件: {file}，即 provider 配置本身，直接作为 --settings 目标；dry-run 不启动、不创建文件）' },
-  'launch.dryDirect': { en: '(direct mode: no merge, no temp file — uses ~/.claude/settings.json as-is)', 'zh-CN': '（direct 模式：不合并、无临时文件，直接用 ~/.claude/settings.json）' },
+  'launch.dryOfficial': { en: '(official mode: no merge, no temp file — uses ~/.claude/settings.json as-is)', 'zh-CN': '（official 模式：不合并、无临时文件，直接用 ~/.claude/settings.json）' },
 
   // ---------- config ----------
   'config.localeSet': { en: 'Locale set to {locale}', 'zh-CN': '语言已设为 {locale}' },

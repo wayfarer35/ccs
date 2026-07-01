@@ -30,6 +30,7 @@ Usage:
   ccs <name> [args...]       Launch with the named provider; args forwarded to claude
   ccs <name> --dry-run       Print provider config + command without launching
   ccs use [args...]          Pick a provider interactively and launch
+  ccs official [args...]     Launch with Claude Code's own default config (no provider)
   ccs list                   List provider configs
   ccs presets                List built-in presets
   ccs create [name]          Create a new config (duplicate names rejected; built-in prompts for a name, default = preset key)
@@ -69,6 +70,7 @@ const helpZh = `ccs ${VERSION} — Claude Code Switch
   ccs <name> [args...]       用指定供应商启动；args 透传给 claude
   ccs <name> --dry-run       打印 provider 配置与命令，不启动
   ccs use [args...]          交互选择供应商并启动
+  ccs official [args...]     用 Claude Code 自身默认配置启动（不走供应商）
   ccs list                   列出供应商配置
   ccs presets                列出可用预设
   ccs create [name]          创建新配置（重名将被拒绝；内置会询问配置名，默认取预设 key）
@@ -131,6 +133,7 @@ async function main(): Promise<void> {
       case 'remove': case 'rm': { finishStandalone(await cmdRemove(rest)); return; }
       case 'common': return cmdCommon();
       case 'show': return cmdShow(rest);
+      case 'official': return cmdLaunchDirect(rest);
       case 'config': return await cmdConfig(rest);
       case 'use': return await cmdUse(rest);
       case 'completion': return cmdCompletion(rest);
@@ -220,7 +223,7 @@ async function cmdUse(rest: string[]): Promise<void> {
       if (n === last) initial = v;
     }
     const actions: PickerItem<UsePick>[] = [
-      { value: { kind: 'direct' } as UsePick, label: t('use.direct'), hint: t('use.directHint') },
+      { value: { kind: 'direct' } as UsePick, label: t('use.official'), hint: t('use.officialHint') },
       { value: { kind: 'create' } as UsePick, label: t('use.create'), hint: t('use.createHint') },
     ];
     if (names.length) {

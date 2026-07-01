@@ -39,11 +39,13 @@ ccs --help
 ## 用法
 
 ```bash
-ccs                      # 交互选择 供应商 / default / create 并启动（有配置时另含 edit / remove）
+ccs                      # 交互选择 供应商 / official / create 并启动（有配置时另含 edit / remove）
 ccs use                  # 同上：交互选择并启动
 ccs provider-name        # 直接用 供应商配置名称
 ccs provider-name --print "hi"   # 透传参数给 claude
 ccs provider-name --dry-run      # 打印片段与命令，不启动
+ccs official             # 用 Claude Code 自身默认配置启动（不走供应商，等同直接运行 claude）
+ccs official --print "hi"        # 透传参数给 claude
 ccs list                 # 列出供应商
 ccs presets              # 列出可用预设
 ccs create               # 引导式创建（先选 内置/自定义，再填 Key）

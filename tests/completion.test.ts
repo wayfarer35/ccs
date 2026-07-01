@@ -24,7 +24,7 @@ import {
   completionScript, completionHelp, SUPPORTED_SHELLS,
 } from '../src/completion.js';
 
-const SUBCOMMANDS = ['list', 'ls', 'presets', 'create', 'edit', 'remove', 'rm', 'common', 'show', 'config', 'use'];
+const SUBCOMMANDS = ['list', 'ls', 'presets', 'create', 'edit', 'remove', 'rm', 'common', 'show', 'config', 'use', 'official'];
 const FLAGS = ['-h', '--help', '-v', '--version'];
 
 describe('completeCandidates — first positional word', () => {
